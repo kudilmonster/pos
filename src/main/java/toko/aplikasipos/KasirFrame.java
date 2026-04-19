@@ -7,6 +7,12 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import com.lowagie.text.Document;
+import com.lowagie.text.Font;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfWriter;
+import java.io.FileOutputStream;
+import javax.swing.JFileChooser;
 
 public class KasirFrame extends javax.swing.JFrame {
 
@@ -30,25 +36,23 @@ public class KasirFrame extends javax.swing.JFrame {
                 return false; // Mengembalikan nilai false berarti semua sel tidak bisa diketik
             }
         };
-        
+
         modelKeranjang.addColumn("Nama Barang");
         modelKeranjang.addColumn("Harga");
         modelKeranjang.addColumn("Qty");
         modelKeranjang.addColumn("Subtotal");
         tblKeranjang.setModel(modelKeranjang);
     }
-    
+
     private void loadProfilToko() {
         String url = "jdbc:sqlite:pos_db.db";
-        
-        try (Connection conn = DriverManager.getConnection(url);
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT nama_toko, alamat FROM profil_toko LIMIT 1")) {
-            
+
+        try (Connection conn = DriverManager.getConnection(url); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SELECT nama_toko, alamat FROM profil_toko LIMIT 1")) {
+
             if (rs.next()) {
                 String nama = rs.getString("nama_toko");
                 String alamat = rs.getString("alamat");
-                
+
                 // Tempelkan data ke UI (Pastikan nama variabel label Anda sama)
                 // Jika Anda tidak membuat lblAlamatToko, Anda bisa menghapus baris lblAlamatToko di bawah
                 if (lblNamaToko != null) {
@@ -58,7 +62,7 @@ public class KasirFrame extends javax.swing.JFrame {
                     lblAlamatToko.setText(alamat);
                 }
             }
-            
+
         } catch (Exception e) {
             System.out.println("Error Load Profil Toko: " + e.getMessage());
         }
@@ -157,6 +161,43 @@ public class KasirFrame extends javax.swing.JFrame {
         }
     }
 
+    private void simpanKePDF(String kontenStruk, String namaFileDefault) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Simpan Struk ke PDF");
+        // Set nama file default (berdasarkan ID Transaksi atau Tanggal)
+        fileChooser.setSelectedFile(new java.io.File(namaFileDefault + ".pdf"));
+
+        int userSelection = fileChooser.showSaveDialog(this);
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            try {
+                String path = fileChooser.getSelectedFile().getAbsolutePath();
+
+                // 1. Buat Dokumen PDF
+                Document document = new Document();
+                PdfWriter.getInstance(document, new FileOutputStream(path));
+
+                document.open();
+
+                // 2. Gunakan font Courier (Monospaced) agar tampilan struk tetap rapi/lurus
+                Font fontStruk = new Font(Font.COURIER, 10, Font.NORMAL);
+
+                // 3. Masukkan konten struk baris demi baris
+                String[] lines = kontenStruk.split("\n");
+                for (String line : lines) {
+                    document.add(new Paragraph(line, fontStruk));
+                }
+
+                document.close();
+
+                JOptionPane.showMessageDialog(this, "Struk berhasil disimpan ke PDF!");
+
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Gagal menyimpan PDF: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     private void resetKasir() {
         // Kosongkan tabel keranjang
         modelKeranjang.setRowCount(0);
@@ -234,20 +275,30 @@ public class KasirFrame extends javax.swing.JFrame {
         struk.append("   TERIMA KASIH ATAS KUNJUNGANNYA   \n");
         struk.append("====================================\n");
 
-        // 3. TAMPILKAN DI LAYAR DAN OPSI CETAK FISIK
-        javax.swing.JTextArea txtStruk = new javax.swing.JTextArea(struk.toString());
-        txtStruk.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 12));
-        txtStruk.setEditable(false);
+// 3. TAMPILKAN DI LAYAR DENGAN OPSI SIMPAN/CETAK
+        javax.swing.JTextArea txtStrukArea = new javax.swing.JTextArea(struk.toString());
+        txtStrukArea.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 12));
 
-        javax.swing.JOptionPane.showMessageDialog(this, new javax.swing.JScrollPane(txtStruk), "Struk Pembayaran", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        // Kita buat array tombol khusus
+        Object[] options = {"Cetak (Printer)", "Simpan ke PDF", "Tutup"};
 
-        int print = javax.swing.JOptionPane.showConfirmDialog(this, "Cetak struk ini ke printer fisik?", "Print", javax.swing.JOptionPane.YES_NO_OPTION);
-        if (print == javax.swing.JOptionPane.YES_OPTION) {
+        int choice = JOptionPane.showOptionDialog(this,
+                new javax.swing.JScrollPane(txtStrukArea),
+                "Struk Pembayaran",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null, options, options[0]);
+
+        if (choice == 0) { // Jika pilih "Cetak (Printer)"
             try {
-                txtStruk.print();
+                txtStrukArea.print();
             } catch (Exception e) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Gagal print: " + e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Gagal print: " + e.getMessage());
             }
+        } else if (choice == 1) { // Jika pilih "Simpan ke PDF"
+            // Buat nama file unik menggunakan timestamp
+            String timeStamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date());
+            simpanKePDF(struk.toString(), "Struk_" + timeStamp);
         }
     }
 
@@ -758,41 +809,67 @@ public class KasirFrame extends javax.swing.JFrame {
             return;
         }
 
-        // 2. Validasi pembayaran
-        String bayarStr = txtBayar.getText();
-        if (bayarStr.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Masukkan nominal pembayaran!", "Peringatan", JOptionPane.WARNING_MESSAGE);
-            return;
+        // Ambil jenis bayar (Tunai, Debit, Qris)
+        String jenisBayar = cbJenisBayar.getSelectedItem().toString();
+
+        int bayar = 0;
+        int kembalian = 0;
+
+        // --- 2. JALUR PEMBAYARAN QRIS (SEMI-MANUAL) ---
+        if (jenisBayar.equalsIgnoreCase("Qris")) {
+            // Tampilkan pop-up menunggu pembayaran
+            Object[] opsi = {"Konfirmasi Lunas", "Batal"};
+            int pilihanQris = JOptionPane.showOptionDialog(this,
+                    "Tagihan: Rp " + totalBelanja + "\n\n"
+                    + "Silakan arahkan pelanggan untuk scan QRIS di meja kasir.\n"
+                    + "Tunggu hingga ada notifikasi uang masuk di HP/Sistem Toko Anda,\n"
+                    + "lalu klik 'Konfirmasi Lunas'.",
+                    "Menunggu Pembayaran QRIS...",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.INFORMATION_MESSAGE,
+                    null, opsi, opsi[0]);
+
+            // Jika kasir klik Batal atau silang (X)
+            if (pilihanQris != JOptionPane.YES_OPTION) {
+                return; // Batalkan proses simpan transaksi
+            }
+
+            // Jika lunas, atur bayar pas dan kembalian 0
+            bayar = totalBelanja;
+            kembalian = 0;
+
+        } // --- 3. JALUR PEMBAYARAN TUNAI / DEBIT ---
+        else {
+            String bayarStr = txtBayar.getText();
+            if (bayarStr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Masukkan nominal uang pembayaran!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            bayar = Integer.parseInt(bayarStr);
+            if (bayar < totalBelanja) {
+                JOptionPane.showMessageDialog(this, "Uang pembayaran kurang!", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            kembalian = bayar - totalBelanja;
         }
 
-        int bayar = Integer.parseInt(bayarStr);
-        if (bayar < totalBelanja) {
-            JOptionPane.showMessageDialog(this, "Uang pembayaran kurang!", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        int kembalian = bayar - totalBelanja;
-
-        // 3. Ambil data tambahan dari komponen GUI Kasir
+        // 4. Ambil data tambahan dari komponen GUI Kasir
         int nilaiDiskon = (Integer) spnDiskon.getValue();
         int nilaiPajak = (Integer) spnPajak.getValue();
 
-// Ambil nama kasir langsung dari variabel global LoginFrame
+        // Ambil nama kasir
         String namaKasir = LoginFrame.kasirAktif;
-// Jika tiba-tiba kosong (misal di-run tanpa lewat login), beri default
         if (namaKasir.isEmpty()) {
             namaKasir = "Admin Default";
         }
 
-        // Ambil jenis bayar (Tunai, Debit, QRIS)
-        String jenisBayar = cbJenisBayar.getSelectedItem().toString();
-
-        // 4. Siapkan URL Database
+        // 5. PROSES SIMPAN KE DATABASE (Sama seperti sebelumnya)
         String url = "jdbc:sqlite:pos_db.db";
 
         try (Connection conn = DriverManager.getConnection(url)) {
 
-            // --- PROSES 1: Insert ke tabel transaksi ---
+            // --- PROSES A: Insert ke tabel transaksi ---
             String sqlTransaksi = "INSERT INTO transaksi (total_harga, diskon_persen, pajak_persen, bayar, kembalian) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement pstTrans = conn.prepareStatement(sqlTransaksi, Statement.RETURN_GENERATED_KEYS)) {
                 pstTrans.setInt(1, totalBelanja);
@@ -802,14 +879,13 @@ public class KasirFrame extends javax.swing.JFrame {
                 pstTrans.setInt(5, kembalian);
                 pstTrans.executeUpdate();
 
-                // Ambil ID Transaksi yang baru saja dibuat oleh SQLite
                 ResultSet rsKeys = pstTrans.getGeneratedKeys();
                 int idTransaksi = -1;
                 if (rsKeys.next()) {
                     idTransaksi = rsKeys.getInt(1);
                 }
 
-                // --- PROSES 2: Loop isi keranjang untuk detail dan kurangi stok ---
+                // --- PROSES B: Loop isi keranjang untuk detail dan kurangi stok ---
                 String sqlDetail = "INSERT INTO detail_transaksi (id_transaksi, nama_barang, harga, qty, subtotal) VALUES (?, ?, ?, ?, ?)";
                 String sqlUpdateStok = "UPDATE barang SET stok = stok - ? WHERE nama_barang = ?";
 
@@ -823,7 +899,7 @@ public class KasirFrame extends javax.swing.JFrame {
                         int qty = Integer.parseInt(modelKeranjang.getValueAt(i, 2).toString());
                         int subtotal = Integer.parseInt(modelKeranjang.getValueAt(i, 3).toString());
 
-                        // Simpan ke tabel detail_transaksi
+                        // Simpan detail
                         pstDetail.setInt(1, idTransaksi);
                         pstDetail.setString(2, nama);
                         pstDetail.setInt(3, harga);
@@ -831,20 +907,20 @@ public class KasirFrame extends javax.swing.JFrame {
                         pstDetail.setInt(5, subtotal);
                         pstDetail.executeUpdate();
 
-                        // Kurangi stok di tabel barang
+                        // Kurangi stok
                         pstUpdateStok.setInt(1, qty);
                         pstUpdateStok.setString(2, nama);
                         pstUpdateStok.executeUpdate();
                     }
                 }
 
-                // --- PROSES 3: Selesai! Tampilkan sukses, cetak nota, dan reset ---
-                JOptionPane.showMessageDialog(this, "Transaksi Berhasil!\nKembalian: Rp. " + kembalian);
+                // --- PROSES C: Selesai! ---
+                JOptionPane.showMessageDialog(this, "Transaksi Berhasil!");
 
-                // Panggil fungsi cetak struk (parameter harus sesuai dengan yang di-update di langkah sebelumnya)
+                // Cetak Struk
                 cetakStruk(totalBelanja, nilaiDiskon, nilaiPajak, bayar, kembalian, namaKasir, jenisBayar);
 
-                // Bersihkan form kasir untuk pelanggan berikutnya
+                // Reset layar
                 resetKasir();
             }
 

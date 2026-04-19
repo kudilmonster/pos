@@ -61,6 +61,8 @@ public class LoginFrame extends javax.swing.JFrame {
         btnLogin.setText("Login");
         btnLogin.addActionListener(this::btnLoginActionPerformed);
 
+        txtPassword.addActionListener(this::txtPasswordActionPerformed);
+
         javax.swing.GroupLayout customRoundedPanel1Layout = new javax.swing.GroupLayout(customRoundedPanel1);
         customRoundedPanel1.setLayout(customRoundedPanel1Layout);
         customRoundedPanel1Layout.setHorizontalGroup(
@@ -184,6 +186,10 @@ public class LoginFrame extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_btnLoginActionPerformed
+
+    private void txtPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtPasswordActionPerformed
+       btnLogin.doClick();
+    }//GEN-LAST:event_txtPasswordActionPerformed
 
     /**
      * @param args the command line arguments
