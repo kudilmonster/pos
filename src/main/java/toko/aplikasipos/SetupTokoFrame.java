@@ -165,7 +165,7 @@ public class SetupTokoFrame extends javax.swing.JFrame {
             String sqlUser = "INSERT INTO users (username, password, role) VALUES (?, ?, 'Admin')";
             try (PreparedStatement pstUser = conn.prepareStatement(sqlUser)) {
                 pstUser.setString(1, admin);
-                pstUser.setString(2, password);
+                pstUser.setString(2, PasswordUtil.hashPassword(password));
                 pstUser.executeUpdate();
             }
 

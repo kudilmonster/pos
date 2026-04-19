@@ -1,224 +1,165 @@
 package toko.aplikasipos;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import javax.swing.JOptionPane;
+import java.sql.*;
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import com.lowagie.text.Document;
-import com.lowagie.text.Font;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.pdf.PdfWriter;
-import java.io.FileOutputStream;
-import javax.swing.JFileChooser;
+import java.util.logging.Logger;
 
 public class KasirFrame extends javax.swing.JFrame {
 
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(KasirFrame.class.getName());
-
+    private static final String DB_URL = "jdbc:sqlite:pos_db.db";
+    private static final Logger logger = Logger.getLogger(KasirFrame.class.getName());
     DefaultTableModel modelKeranjang;
-    int totalBelanja = 0; // Variabel untuk menyimpan total uang
+    int totalBelanja = 0;
 
     public KasirFrame() {
         initComponents();
 
+        initTable();
         loadProfilToko();
-        // URUTANNYA HARUS SEPERTI INI:
-        loadKategoriKasir(); // 1. Muat kategori dulu
-        loadBarang();        // 2. Baru muat barang
+        loadKategoriKasir();
+        loadBarang();
+    }
 
-        // Membuat model tabel yang dikunci penuh (Read-Only)
-        modelKeranjang = new DefaultTableModel() {
+    // ================= INIT =================
+    private void initTable() {
+        modelKeranjang = new DefaultTableModel(
+                new String[]{"Nama Barang", "Harga", "Qty", "Subtotal"}, 0
+        ) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Mengembalikan nilai false berarti semua sel tidak bisa diketik
+                return false;
             }
         };
 
-        modelKeranjang.addColumn("Nama Barang");
-        modelKeranjang.addColumn("Harga");
-        modelKeranjang.addColumn("Qty");
-        modelKeranjang.addColumn("Subtotal");
         tblKeranjang.setModel(modelKeranjang);
     }
 
-    private void loadProfilToko() {
-        String url = "jdbc:sqlite:pos_db.db";
+    // ================= HELPER =================
+    private Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(DB_URL);
+    }
 
-        try (Connection conn = DriverManager.getConnection(url); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SELECT nama_toko, alamat FROM profil_toko LIMIT 1")) {
-
-            if (rs.next()) {
-                String nama = rs.getString("nama_toko");
-                String alamat = rs.getString("alamat");
-
-                // Tempelkan data ke UI (Pastikan nama variabel label Anda sama)
-                // Jika Anda tidak membuat lblAlamatToko, Anda bisa menghapus baris lblAlamatToko di bawah
-                if (lblNamaToko != null) {
-                    lblNamaToko.setText(nama);
-                }
-                if (lblAlamatToko != null) {
-                    lblAlamatToko.setText(alamat);
-                }
-            }
-
+    private int toInt(Object value) {
+        try {
+            return Integer.parseInt(value.toString());
         } catch (Exception e) {
-            System.out.println("Error Load Profil Toko: " + e.getMessage());
+            return 0;
         }
     }
 
-    private void loadBarang() {
-        // Hindari error NullPointer saat form baru pertama kali dibangun
-        if (cbPilihBarang == null || cbKategori == null) {
-            return;
-        }
-
-        cbPilihBarang.removeAllItems();
-        String url = "jdbc:sqlite:pos_db.db";
-
-        // Ambil kategori yang sedang dipilih
-        String kategoriPilihan = "Semua Kategori";
-        if (cbKategori.getSelectedItem() != null) {
-            kategoriPilihan = cbKategori.getSelectedItem().toString();
-        }
-
-        // Siapkan query dasar
-        String sql = "SELECT nama_barang FROM barang WHERE stok > 0";
-
-        // Tambahkan filter jika bukan "Semua Kategori"
-        if (!kategoriPilihan.equals("Semua Kategori")) {
-            sql += " AND kategori = ?";
-        }
-
-        sql += " ORDER BY nama_barang ASC";
-
-        try (Connection conn = DriverManager.getConnection(url); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            // Masukkan parameter kategori jika filter aktif
-            if (!kategoriPilihan.equals("Semua Kategori")) {
-                pstmt.setString(1, kategoriPilihan);
+    private int getQtyDiKeranjang(String namaBarang) {
+        int totalQty = 0;
+        for (int i = 0; i < modelKeranjang.getRowCount(); i++) {
+            Object nama = modelKeranjang.getValueAt(i, 0);
+            if (nama != null && namaBarang.equals(nama.toString())) {
+                totalQty += toInt(modelKeranjang.getValueAt(i, 2));
             }
+        }
+        return totalQty;
+    }
 
-            ResultSet rs = pstmt.executeQuery();
+    // ================= LOAD DATA =================
+    private void loadProfilToko() {
+        String sql = "SELECT nama_toko, alamat FROM profil_toko LIMIT 1";
 
-            while (rs.next()) {
-                cbPilihBarang.addItem(rs.getString("nama_barang"));
+        try (Connection c = getConnection(); Statement s = c.createStatement(); ResultSet r = s.executeQuery(sql)) {
+
+            if (r.next()) {
+                lblNamaToko.setText(r.getString("nama_toko"));
+                lblAlamatToko.setText(r.getString("alamat"));
             }
-
-            // Panggil event agar label harga/stok menyesuaikan dengan barang pertama di list
-            cbPilihBarangActionPerformed(null);
 
         } catch (Exception e) {
-            System.out.println("Error Load Barang: " + e.getMessage());
+            System.out.println("Error Profil: " + e.getMessage());
         }
     }
 
     private void loadKategoriKasir() {
         cbKategori.removeAllItems();
-        cbKategori.addItem("Semua Kategori"); // Opsi default
+        cbKategori.addItem("Semua Kategori");
 
-        String url = "jdbc:sqlite:pos_db.db";
+        String sql = "SELECT nama_kategori FROM kategori ORDER BY nama_kategori";
 
-        try (Connection conn = DriverManager.getConnection(url); Statement st = conn.createStatement(); ResultSet rs = st.executeQuery("SELECT nama_kategori FROM kategori ORDER BY nama_kategori ASC")) {
+        try (Connection c = getConnection(); Statement s = c.createStatement(); ResultSet r = s.executeQuery(sql)) {
 
-            while (rs.next()) {
-                cbKategori.addItem(rs.getString("nama_kategori"));
+            while (r.next()) {
+                cbKategori.addItem(r.getString(1));
             }
 
         } catch (Exception e) {
-            System.out.println("Error Load Kategori Kasir: " + e.getMessage());
+            System.out.println("Error kategori: " + e.getMessage());
         }
     }
 
+    private void loadBarang() {
+        cbPilihBarang.removeAllItems();
+
+        String kategori = cbKategori.getSelectedItem() == null
+                ? "Semua Kategori"
+                : cbKategori.getSelectedItem().toString();
+
+        String sql = "SELECT nama_barang FROM barang WHERE stok > 0";
+
+        if (!kategori.equals("Semua Kategori")) {
+            sql += " AND kategori = ?";
+        }
+
+        try (Connection c = getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+
+            if (!kategori.equals("Semua Kategori")) {
+                p.setString(1, kategori);
+            }
+
+            ResultSet r = p.executeQuery();
+
+            while (r.next()) {
+                cbPilihBarang.addItem(r.getString(1));
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error barang: " + e.getMessage());
+        }
+    }
+
+    // ================= LOGIC =================
     private void hitungTotal() {
         int subtotal = 0;
-        // Jumlahkan semua subtotal dari tabel keranjang
+
         for (int i = 0; i < modelKeranjang.getRowCount(); i++) {
-            subtotal += Integer.parseInt(modelKeranjang.getValueAt(i, 3).toString());
+            subtotal += toInt(modelKeranjang.getValueAt(i, 3));
         }
 
-        try {
-            // Ambil nilai langsung dari JSpinner (Cast ke Number lalu jadikan double untuk perhitungan pecahan)
-            double diskonPersen = ((Number) spnDiskon.getValue()).doubleValue();
-            double pajakPersen = ((Number) spnPajak.getValue()).doubleValue();
+        double diskon = ((Number) spnDiskon.getValue()).doubleValue();
+        double pajak = ((Number) spnPajak.getValue()).doubleValue();
 
-            // Hitung Potongan dan Pajak
-            double potonganDiskon = subtotal * (diskonPersen / 100.0);
-            double setelahDiskon = subtotal - potonganDiskon;
-            double nominalPajak = setelahDiskon * (pajakPersen / 100.0);
+        double setelahDiskon = subtotal - (subtotal * diskon / 100);
+        double total = setelahDiskon + (setelahDiskon * pajak / 100);
 
-            // Total Akhir (Dibulatkan)
-            totalBelanja = (int) Math.round(setelahDiskon + nominalPajak);
+        totalBelanja = (int) Math.round(total);
 
-            lblTotalHarga.setText("Rp : " + totalBelanja);
-
-            // Panggil event kembalian agar nilai kembalian ikut terupdate jika kasir sudah mengetik uang bayar
-            txtBayarKeyReleased(null);
-
-        } catch (Exception e) {
-            System.out.println("Error hitung total: " + e.getMessage());
-        }
+        lblTotalHarga.setText("Rp : " + totalBelanja);
+        txtBayarKeyReleased(null);
     }
 
-    private void simpanKePDF(String kontenStruk, String namaFileDefault) {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Simpan Struk ke PDF");
-        // Set nama file default (berdasarkan ID Transaksi atau Tanggal)
-        fileChooser.setSelectedFile(new java.io.File(namaFileDefault + ".pdf"));
-
-        int userSelection = fileChooser.showSaveDialog(this);
-
-        if (userSelection == JFileChooser.APPROVE_OPTION) {
-            try {
-                String path = fileChooser.getSelectedFile().getAbsolutePath();
-
-                // 1. Buat Dokumen PDF
-                Document document = new Document();
-                PdfWriter.getInstance(document, new FileOutputStream(path));
-
-                document.open();
-
-                // 2. Gunakan font Courier (Monospaced) agar tampilan struk tetap rapi/lurus
-                Font fontStruk = new Font(Font.COURIER, 10, Font.NORMAL);
-
-                // 3. Masukkan konten struk baris demi baris
-                String[] lines = kontenStruk.split("\n");
-                for (String line : lines) {
-                    document.add(new Paragraph(line, fontStruk));
-                }
-
-                document.close();
-
-                JOptionPane.showMessageDialog(this, "Struk berhasil disimpan ke PDF!");
-
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Gagal menyimpan PDF: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
+    // ================= ACTION =================
     private void resetKasir() {
-        // Kosongkan tabel keranjang
         modelKeranjang.setRowCount(0);
-
-        // Kembalikan total ke 0
         totalBelanja = 0;
-        lblTotalHarga.setText("Rp : ");;
 
-        // Kosongkan input dan label bayar/kembalian
-        txtBayar.setText("");
+        lblTotalHarga.setText("Rp : ");
         lblKembalian.setText("Rp : ");
 
+        txtBayar.setText("");
         spnDiskon.setValue(0);
         spnPajak.setValue(0);
 
-        // Muat ulang daftar barang di ComboBox (agar barang yang stoknya habis setelah transaksi ini hilang dari daftar)
         loadBarang();
     }
 
     private void cetakStruk(int total, int diskon, int pajak, int bayar, int kembalian, String kasir, String jenisBayar) {
-        // 1. AMBIL DATA PROFIL TOKO DARI DATABASE
+
+        // 1. AMBIL PROFIL TOKO
         String namaToko = "NAMA TOKO";
         String alamatToko = "Alamat Toko";
         String url = "jdbc:sqlite:pos_db.db";
@@ -226,33 +167,31 @@ public class KasirFrame extends javax.swing.JFrame {
         try (Connection conn = DriverManager.getConnection(url); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SELECT nama_toko, alamat FROM profil_toko LIMIT 1")) {
 
             if (rs.next()) {
-                // Ambil data dari database ke variabel
                 namaToko = rs.getString("nama_toko");
                 alamatToko = rs.getString("alamat");
             }
+
         } catch (Exception e) {
-            System.out.println("Error load profil toko untuk struk: " + e.getMessage());
+            System.out.println("Error load profil toko: " + e.getMessage());
         }
 
-// 2. MULAI SUSUN TEKS STRUK
+        // 2. SUSUN STRUK
         StringBuilder struk = new StringBuilder();
-        int lebarStruk = 36; // Sesuai dengan jumlah tanda "=" di bawah ini
+        int lebarStruk = 36;
 
         struk.append("====================================\n");
-
-        // Gunakan fungsi centerText agar teks otomatis berada di tengah
         struk.append(centerText(namaToko, lebarStruk)).append("\n");
         struk.append(centerText(alamatToko, lebarStruk)).append("\n");
 
-        // Buat format tanggal yang ringkas (Hari-Bulan-Tahun Jam:Menit)
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm");
-        String tanggalRingkas = sdf.format(new java.util.Date());
+        String tanggal = sdf.format(new java.util.Date());
 
         struk.append("====================================\n");
         struk.append("Kasir : ").append(kasir).append("\n");
-        struk.append("Tgl   : ").append(tanggalRingkas).append("\n");
+        struk.append("Tgl   : ").append(tanggal).append("\n");
         struk.append("------------------------------------\n");
 
+        // LOOP KERANJANG
         for (int i = 0; i < modelKeranjang.getRowCount(); i++) {
             String nama = modelKeranjang.getValueAt(i, 0).toString();
             String harga = modelKeranjang.getValueAt(i, 1).toString();
@@ -261,7 +200,7 @@ public class KasirFrame extends javax.swing.JFrame {
 
             struk.append(nama).append("\n");
             struk.append(qty).append(" x Rp ").append(harga)
-                    .append("             Rp ").append(sub).append("\n");
+                    .append("        Rp ").append(sub).append("\n");
         }
 
         struk.append("------------------------------------\n");
@@ -275,45 +214,79 @@ public class KasirFrame extends javax.swing.JFrame {
         struk.append("   TERIMA KASIH ATAS KUNJUNGANNYA   \n");
         struk.append("====================================\n");
 
-// 3. TAMPILKAN DI LAYAR DENGAN OPSI SIMPAN/CETAK
-        javax.swing.JTextArea txtStrukArea = new javax.swing.JTextArea(struk.toString());
-        txtStrukArea.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 12));
+        // 3. TAMPILKAN + OPSI
+        JTextArea txtArea = new JTextArea(struk.toString());
+        txtArea.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 12));
 
-        // Kita buat array tombol khusus
         Object[] options = {"Cetak (Printer)", "Simpan ke PDF", "Tutup"};
 
-        int choice = JOptionPane.showOptionDialog(this,
-                new javax.swing.JScrollPane(txtStrukArea),
+        int pilihan = JOptionPane.showOptionDialog(this,
+                new JScrollPane(txtArea),
                 "Struk Pembayaran",
                 JOptionPane.YES_NO_CANCEL_OPTION,
                 JOptionPane.INFORMATION_MESSAGE,
-                null, options, options[0]);
+                null,
+                options,
+                options[0]);
 
-        if (choice == 0) { // Jika pilih "Cetak (Printer)"
+        if (pilihan == 0) {
             try {
-                txtStrukArea.print();
+                txtArea.print();
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this, "Gagal print: " + e.getMessage());
             }
-        } else if (choice == 1) { // Jika pilih "Simpan ke PDF"
-            // Buat nama file unik menggunakan timestamp
+        } else if (pilihan == 1) {
             String timeStamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date());
             simpanKePDF(struk.toString(), "Struk_" + timeStamp);
         }
     }
 
-// Fungsi untuk menengahkan teks pada struk (lebar default 36 karakter)
     private String centerText(String text, int width) {
         if (text.length() >= width) {
-            return text; // Jika teks sudah kepanjangan, biarkan saja
+            return text;
         }
+
         int padding = (width - text.length()) / 2;
         StringBuilder sb = new StringBuilder();
+
         for (int i = 0; i < padding; i++) {
-            sb.append(" "); // Tambahkan spasi di kiri
+            sb.append(" ");
         }
+
         sb.append(text);
         return sb.toString();
+    }
+
+    private void simpanKePDF(String isi, String namaFile) {
+        try {
+            JFileChooser fc = new JFileChooser();
+            fc.setSelectedFile(new java.io.File(namaFile + ".pdf"));
+
+            int pilih = fc.showSaveDialog(this);
+
+            if (pilih == JFileChooser.APPROVE_OPTION) {
+
+                com.lowagie.text.Document doc = new com.lowagie.text.Document();
+                com.lowagie.text.pdf.PdfWriter.getInstance(doc,
+                        new java.io.FileOutputStream(fc.getSelectedFile().getAbsolutePath()));
+
+                doc.open();
+
+                com.lowagie.text.Font font = new com.lowagie.text.Font(
+                        com.lowagie.text.Font.COURIER, 10);
+
+                for (String line : isi.split("\n")) {
+                    doc.add(new com.lowagie.text.Paragraph(line, font));
+                }
+
+                doc.close();
+
+                JOptionPane.showMessageDialog(this, "PDF berhasil disimpan!");
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error PDF: " + e.getMessage());
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -728,53 +701,49 @@ public class KasirFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnTambahKeranjangActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTambahKeranjangActionPerformed
-// Pastikan ada barang yang dipilih
         if (cbPilihBarang.getSelectedItem() == null) {
-            JOptionPane.showMessageDialog(this, "Pilih barang terlebih dahulu!");
+            JOptionPane.showMessageDialog(this, "Pilih barang!");
             return;
         }
 
-        String namaBarang = cbPilihBarang.getSelectedItem().toString();
-
-        // 1. Ambil nilai langsung dari JSpinner
+        String nama = cbPilihBarang.getSelectedItem().toString();
         int qty = (Integer) spnQty.getValue();
+        if (qty <= 0) {
+            JOptionPane.showMessageDialog(this, "Qty harus lebih dari 0.");
+            return;
+        }
 
-        // 2. BARIS INI YANG KEMUNGKINAN HILANG
-        String url = "jdbc:sqlite:pos_db.db";
+        String sql = "SELECT harga, stok FROM barang WHERE nama_barang=?";
 
-        try (Connection conn = DriverManager.getConnection(url); PreparedStatement pstmt = conn.prepareStatement("SELECT harga, stok FROM barang WHERE nama_barang = ?")) {
+        try (Connection c = getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
 
-            pstmt.setString(1, namaBarang);
-            ResultSet rs = pstmt.executeQuery();
+            p.setString(1, nama);
+            ResultSet r = p.executeQuery();
 
-            if (rs.next()) {
-                int harga = rs.getInt("harga");
-                int stokTersedia = rs.getInt("stok");
+            if (r.next()) {
+                int harga = r.getInt("harga");
+                int stok = r.getInt("stok");
+                int qtyDiKeranjang = getQtyDiKeranjang(nama);
+                int qtySetelahTambah = qtyDiKeranjang + qty;
 
-                // Cek apakah stok mencukupi
-                if (qty > stokTersedia) {
-                    JOptionPane.showMessageDialog(this, "Stok tidak mencukupi! Sisa stok: " + stokTersedia);
+                if (qtySetelahTambah > stok) {
+                    JOptionPane.showMessageDialog(this,
+                            "Stok kurang! Stok tersedia: " + stok + ", sudah di keranjang: " + qtyDiKeranjang);
                     return;
                 }
 
                 int subtotal = harga * qty;
 
-                // Masukkan ke tabel keranjang
                 modelKeranjang.addRow(new Object[]{
-                    namaBarang,
-                    harga,
-                    qty,
-                    subtotal
+                    nama, harga, qty, subtotal
                 });
 
-                // Update Total Belanja
                 hitungTotal();
-
-                // 3. Kembalikan nilai spinner ke angka 1
                 spnQty.setValue(1);
             }
+
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error Tambah Keranjang: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, e.getMessage());
         }
     }//GEN-LAST:event_btnTambahKeranjangActionPerformed
 
@@ -840,13 +809,18 @@ public class KasirFrame extends javax.swing.JFrame {
 
         } // --- 3. JALUR PEMBAYARAN TUNAI / DEBIT ---
         else {
-            String bayarStr = txtBayar.getText();
+            String bayarStr = txtBayar.getText().trim();
             if (bayarStr.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Masukkan nominal uang pembayaran!", "Peringatan", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            bayar = Integer.parseInt(bayarStr);
+            try {
+                bayar = Integer.parseInt(bayarStr);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Nominal pembayaran harus berupa angka!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             if (bayar < totalBelanja) {
                 JOptionPane.showMessageDialog(this, "Uang pembayaran kurang!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
@@ -864,42 +838,38 @@ public class KasirFrame extends javax.swing.JFrame {
             namaKasir = "Admin Default";
         }
 
-        // 5. PROSES SIMPAN KE DATABASE (Sama seperti sebelumnya)
-        String url = "jdbc:sqlite:pos_db.db";
+        // 5. PROSES SIMPAN KE DATABASE SECARA ATOMIC
+        try (Connection conn = getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                String sqlTransaksi = "INSERT INTO transaksi (total_harga, diskon_persen, pajak_persen, bayar, kembalian) VALUES (?, ?, ?, ?, ?)";
+                int idTransaksi;
+                try (PreparedStatement pstTrans = conn.prepareStatement(sqlTransaksi, Statement.RETURN_GENERATED_KEYS)) {
+                    pstTrans.setInt(1, totalBelanja);
+                    pstTrans.setInt(2, nilaiDiskon);
+                    pstTrans.setInt(3, nilaiPajak);
+                    pstTrans.setInt(4, bayar);
+                    pstTrans.setInt(5, kembalian);
+                    pstTrans.executeUpdate();
 
-        try (Connection conn = DriverManager.getConnection(url)) {
-
-            // --- PROSES A: Insert ke tabel transaksi ---
-            String sqlTransaksi = "INSERT INTO transaksi (total_harga, diskon_persen, pajak_persen, bayar, kembalian) VALUES (?, ?, ?, ?, ?)";
-            try (PreparedStatement pstTrans = conn.prepareStatement(sqlTransaksi, Statement.RETURN_GENERATED_KEYS)) {
-                pstTrans.setInt(1, totalBelanja);
-                pstTrans.setInt(2, nilaiDiskon);
-                pstTrans.setInt(3, nilaiPajak);
-                pstTrans.setInt(4, bayar);
-                pstTrans.setInt(5, kembalian);
-                pstTrans.executeUpdate();
-
-                ResultSet rsKeys = pstTrans.getGeneratedKeys();
-                int idTransaksi = -1;
-                if (rsKeys.next()) {
+                    ResultSet rsKeys = pstTrans.getGeneratedKeys();
+                    if (!rsKeys.next()) {
+                        throw new SQLException("Gagal membuat ID transaksi.");
+                    }
                     idTransaksi = rsKeys.getInt(1);
                 }
 
-                // --- PROSES B: Loop isi keranjang untuk detail dan kurangi stok ---
                 String sqlDetail = "INSERT INTO detail_transaksi (id_transaksi, nama_barang, harga, qty, subtotal) VALUES (?, ?, ?, ?, ?)";
-                String sqlUpdateStok = "UPDATE barang SET stok = stok - ? WHERE nama_barang = ?";
+                String sqlUpdateStok = "UPDATE barang SET stok = stok - ? WHERE nama_barang = ? AND stok >= ?";
 
                 try (PreparedStatement pstDetail = conn.prepareStatement(sqlDetail); PreparedStatement pstUpdateStok = conn.prepareStatement(sqlUpdateStok)) {
-
                     int jumlahBaris = modelKeranjang.getRowCount();
-
                     for (int i = 0; i < jumlahBaris; i++) {
                         String nama = modelKeranjang.getValueAt(i, 0).toString();
                         int harga = Integer.parseInt(modelKeranjang.getValueAt(i, 1).toString());
                         int qty = Integer.parseInt(modelKeranjang.getValueAt(i, 2).toString());
                         int subtotal = Integer.parseInt(modelKeranjang.getValueAt(i, 3).toString());
 
-                        // Simpan detail
                         pstDetail.setInt(1, idTransaksi);
                         pstDetail.setString(2, nama);
                         pstDetail.setInt(3, harga);
@@ -907,23 +877,25 @@ public class KasirFrame extends javax.swing.JFrame {
                         pstDetail.setInt(5, subtotal);
                         pstDetail.executeUpdate();
 
-                        // Kurangi stok
                         pstUpdateStok.setInt(1, qty);
                         pstUpdateStok.setString(2, nama);
-                        pstUpdateStok.executeUpdate();
+                        pstUpdateStok.setInt(3, qty);
+                        int updated = pstUpdateStok.executeUpdate();
+                        if (updated == 0) {
+                            throw new SQLException("Stok barang '" + nama + "' tidak mencukupi saat simpan transaksi.");
+                        }
                     }
                 }
 
-                // --- PROSES C: Selesai! ---
+                conn.commit();
+
                 JOptionPane.showMessageDialog(this, "Transaksi Berhasil!");
-
-                // Cetak Struk
                 cetakStruk(totalBelanja, nilaiDiskon, nilaiPajak, bayar, kembalian, namaKasir, jenisBayar);
-
-                // Reset layar
                 resetKasir();
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
             }
-
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error Transaksi: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -969,18 +941,14 @@ public class KasirFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_spnPajakStateChanged
 
     private void btnHapusItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHapusItemActionPerformed
-// 1. Cek baris mana yang dipilih di tabel (gunakan tblKeranjang, bukan jTable1)
-        int barisTerpilih = tblKeranjang.getSelectedRow();
+        int row = tblKeranjang.getSelectedRow();
 
-        if (barisTerpilih == -1) {
-            JOptionPane.showMessageDialog(this, "Silakan klik/pilih barang di tabel yang ingin dihapus!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Pilih item!");
             return;
         }
 
-        // 2. Hapus baris dari tabel keranjang
-        modelKeranjang.removeRow(barisTerpilih);
-
-        // 3. Panggil hitungTotal() agar total belanja, diskon, dan pajak otomatis terhitung ulang!
+        modelKeranjang.removeRow(row);
         hitungTotal();
     }//GEN-LAST:event_btnHapusItemActionPerformed
 
@@ -1000,15 +968,8 @@ public class KasirFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnBatalKeranjangActionPerformed
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
+
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -1016,8 +977,8 @@ public class KasirFrame extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
         //</editor-fold>
 

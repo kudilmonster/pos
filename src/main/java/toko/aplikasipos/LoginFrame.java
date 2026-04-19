@@ -126,26 +126,42 @@ public class LoginFrame extends javax.swing.JFrame {
         }
 
         String url = "jdbc:sqlite:pos_db.db";
-        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+        String sql = "SELECT id_user, username, password, role FROM users WHERE username = ?";
 
         boolean isLoginSukses = false;
         String roleAkun = ""; // Variabel baru untuk menyimpan role
+        int idUser = -1;
+        String storedPassword = null;
 
         try (Connection conn = DriverManager.getConnection(url); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, username);
-            pstmt.setString(2, password);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    isLoginSukses = true;
-                    kasirAktif = rs.getString("username");
-                    roleAkun = rs.getString("role"); // Ambil peran dari database
+                    idUser = rs.getInt("id_user");
+                    storedPassword = rs.getString("password");
 
-                    // Jaga-jaga jika role kosong (misal akun lama), anggap saja Kasir
-                    if (roleAkun == null) {
-                        roleAkun = "Kasir";
+                    if (PasswordUtil.verify(password, storedPassword)) {
+                        isLoginSukses = true;
+                        kasirAktif = rs.getString("username");
+                        roleAkun = rs.getString("role"); // Ambil peran dari database
+
+                        // Jaga-jaga jika role kosong (misal akun lama), anggap saja Kasir
+                        if (roleAkun == null) {
+                            roleAkun = "Kasir";
+                        }
                     }
+                }
+            }
+
+            // Migrasi password lama (plaintext) menjadi hash setelah login sukses
+            if (isLoginSukses && storedPassword != null && !PasswordUtil.isHashed(storedPassword)) {
+                String sqlUpdate = "UPDATE users SET password = ? WHERE id_user = ?";
+                try (PreparedStatement pstUpdate = conn.prepareStatement(sqlUpdate)) {
+                    pstUpdate.setString(1, PasswordUtil.hashPassword(password));
+                    pstUpdate.setInt(2, idUser);
+                    pstUpdate.executeUpdate();
                 }
             }
 

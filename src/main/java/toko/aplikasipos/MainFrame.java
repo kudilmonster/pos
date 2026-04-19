@@ -9,8 +9,29 @@ import java.sql.PreparedStatement;
 import javax.swing.JOptionPane;
 
 public class MainFrame extends javax.swing.JFrame {
-private static final String DB_URL = "jdbc:sqlite:pos_db.db";
+
+    private static final String DB_URL = "jdbc:sqlite:pos_db.db";
+
+    private Connection getConnection() throws Exception {
+        return DriverManager.getConnection(DB_URL);
+    }
+
+    private int parseInteger(String value, String fieldName) throws Exception {
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            throw new Exception(fieldName + " harus berupa angka!");
+        }
+    }
+
+    private void validateNonNegative(int value, String fieldName) throws Exception {
+        if (value < 0) {
+            throw new Exception(fieldName + " tidak boleh negatif!");
+        }
+    }
+
     private KasirFrame formKasirAktif = null;
+    private ReportFrame formLaporanAktif = null;
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
     private String idBarangTerpilih = "";
 
@@ -22,68 +43,84 @@ private static final String DB_URL = "jdbc:sqlite:pos_db.db";
         tampilkanData();   // Menampilkan data di tabel
     }
 
+    private void resetForm() {
+        txtNama.setText("");
+        txtHarga.setText("");
+        txtStok.setText("");
+        cbKategori.setSelectedIndex(0);
+        idBarangTerpilih = "";
+    }
+
     private void initDatabase() {
-        String url = "jdbc:sqlite:pos_db.db";
+        try (Connection conn = DriverManager.getConnection(DB_URL); Statement stmt = conn.createStatement()) {
 
-        try (Connection conn = DriverManager.getConnection(url); Statement stmt = conn.createStatement()) {
+            // KATEGORI
+            stmt.execute("""
+            CREATE TABLE IF NOT EXISTS kategori (
+                id_kategori INTEGER PRIMARY KEY AUTOINCREMENT,
+                nama_kategori TEXT UNIQUE NOT NULL
+            )
+        """);
 
-            // 1. Buat tabel kategori
-            String sqlKategori = "CREATE TABLE IF NOT EXISTS kategori ("
-                    + "id_kategori INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + "nama_kategori TEXT UNIQUE NOT NULL)";
-            stmt.execute(sqlKategori);
+            // BARANG
+            stmt.execute("""
+            CREATE TABLE IF NOT EXISTS barang (
+                id_barang INTEGER PRIMARY KEY AUTOINCREMENT,
+                nama_barang TEXT UNIQUE NOT NULL,
+                kategori TEXT NOT NULL,
+                harga INTEGER NOT NULL,
+                stok INTEGER NOT NULL
+            )
+        """);
 
-            // 2. Buat tabel barang
-            String sqlBarang = "CREATE TABLE IF NOT EXISTS barang ("
-                    + " id_barang INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + " nama_barang TEXT UNIQUE NOT NULL,"
-                    + " kategori TEXT NOT NULL,"
-                    + " harga INTEGER NOT NULL,"
-                    + " stok INTEGER NOT NULL"
-                    + ");";
-            stmt.execute(sqlBarang);
+            // TRANSAKSI
+            stmt.execute("""
+            CREATE TABLE IF NOT EXISTS transaksi (
+                id_transaksi INTEGER PRIMARY KEY AUTOINCREMENT,
+                tanggal DATETIME DEFAULT CURRENT_TIMESTAMP,
+                total_harga INTEGER,
+                diskon_persen INTEGER,
+                pajak_persen INTEGER,
+                bayar INTEGER,
+                kembalian INTEGER
+            )
+        """);
 
-            // 3. Buat tabel transaksi
-            String sqlTransaksi = "CREATE TABLE IF NOT EXISTS transaksi ("
-                    + "id_transaksi INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + "tanggal DATETIME DEFAULT CURRENT_TIMESTAMP, "
-                    + "total_harga INTEGER, "
-                    + "diskon_persen INTEGER, "
-                    + "pajak_persen INTEGER, "
-                    + "bayar INTEGER, "
-                    + "kembalian INTEGER)";
-            stmt.execute(sqlTransaksi);
+            // DETAIL TRANSAKSI
+            stmt.execute("""
+            CREATE TABLE IF NOT EXISTS detail_transaksi (
+                id_detail INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_transaksi INTEGER,
+                nama_barang TEXT,
+                harga INTEGER,
+                qty INTEGER,
+                subtotal INTEGER
+            )
+        """);
 
-            // 4. Buat tabel detail transaksi
-            String sqlDetail = "CREATE TABLE IF NOT EXISTS detail_transaksi ("
-                    + "id_detail INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + "id_transaksi INTEGER, "
-                    + "nama_barang TEXT, "
-                    + "harga INTEGER, "
-                    + "qty INTEGER, "
-                    + "subtotal INTEGER)";
-            stmt.execute(sqlDetail);
+            // ✅ USERS (FIX ERROR BESAR)
+            stmt.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id_user INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                role TEXT NOT NULL
+            )
+        """);
 
-            // 5. Isi kategori dasar jika masih kosong (DISEMPURNAKAN)
-            boolean butuhIsiData = false;
-            // Gunakan try khusus untuk ResultSet agar langsung otomatis ditutup
-            try (ResultSet rsKategori = stmt.executeQuery("SELECT COUNT(*) AS total FROM kategori")) {
-                if (rsKategori.next() && rsKategori.getInt("total") == 0) {
-                    butuhIsiData = true;
+            // INSERT DEFAULT KATEGORI
+            try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS total FROM kategori")) {
+                if (rs.next() && rs.getInt("total") == 0) {
+                    stmt.execute("INSERT INTO kategori (nama_kategori) VALUES ('Makanan')");
+                    stmt.execute("INSERT INTO kategori (nama_kategori) VALUES ('Minuman')");
+                    stmt.execute("INSERT INTO kategori (nama_kategori) VALUES ('Sembako')");
                 }
             }
 
-            // Jika kosong, baru lakukan penambahan data
-            if (butuhIsiData) {
-                stmt.execute("INSERT INTO kategori (nama_kategori) VALUES ('Makanan')");
-                stmt.execute("INSERT INTO kategori (nama_kategori) VALUES ('Minuman')");
-                stmt.execute("INSERT INTO kategori (nama_kategori) VALUES ('Sembako')");
-            }
-
-            System.out.println("Database dan Tabel berhasil diinisialisasi!");
+            System.out.println("Database siap!");
 
         } catch (Exception e) {
-            System.out.println("Error Inisialisasi Database: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Error DB: " + e.getMessage());
         }
     }
 
@@ -271,6 +308,7 @@ private static final String DB_URL = "jdbc:sqlite:pos_db.db";
         txtUsernameUser = new javax.swing.JTextField();
         cbRoleUser = new javax.swing.JComboBox<>();
         lblMenuKasir = new javax.swing.JButton();
+        btnLaporan = new javax.swing.JButton();
         lblPassword = new javax.swing.JLabel();
         txtPasswordUser = new javax.swing.JPasswordField();
         btnSimpanUser = new javax.swing.JButton();
@@ -554,6 +592,11 @@ private static final String DB_URL = "jdbc:sqlite:pos_db.db";
         lblMenuKasir.addActionListener(this::lblMenuKasirActionPerformed);
         panelAkun.add(lblMenuKasir);
 
+        btnLaporan.setBackground(new java.awt.Color(72, 126, 176));
+        btnLaporan.setText("Laporan");
+        btnLaporan.addActionListener(this::btnLaporanActionPerformed);
+        panelAkun.add(btnLaporan);
+
         lblPassword.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         lblPassword.setForeground(new java.awt.Color(255, 255, 255));
         lblPassword.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -701,60 +744,50 @@ private static final String DB_URL = "jdbc:sqlite:pos_db.db";
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnSimpanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanActionPerformed
-// 1. Validasi input kosong (menggunakan trim() untuk menghapus spasi tidak sengaja)
-        String namaBarangInput = txtNama.getText().trim();
-        String hargaInput = txtHarga.getText().trim();
-        String stokInput = txtStok.getText().trim();
+        String nama = txtNama.getText().trim();
+        String hargaStr = txtHarga.getText().trim();
+        String stokStr = txtStok.getText().trim();
+        Object kategoriObj = cbKategori.getSelectedItem();
 
-        if (namaBarangInput.isEmpty() || hargaInput.isEmpty() || stokInput.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Semua kolom harus diisi!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+        if (nama.isEmpty() || hargaStr.isEmpty() || stokStr.isEmpty() || kategoriObj == null) {
+            JOptionPane.showMessageDialog(this, "Semua field wajib diisi!");
             return;
         }
 
-        String url = "jdbc:sqlite:pos_db.db";
+        try (Connection conn = getConnection()) {
 
-        try (Connection conn = DriverManager.getConnection(url)) {
+            int harga = parseInteger(hargaStr, "Harga");
+            int stok = parseInteger(stokStr, "Stok");
+            validateNonNegative(harga, "Harga");
+            validateNonNegative(stok, "Stok");
+            String kategori = kategoriObj.toString();
 
-            // 2. CEK APAKAH BARANG SUDAH ADA DI DATABASE
-            String sqlCek = "SELECT COUNT(*) AS total FROM barang WHERE nama_barang = ?";
-            try (PreparedStatement pstCek = conn.prepareStatement(sqlCek)) {
-                pstCek.setString(1, namaBarangInput);
-                ResultSet rsCek = pstCek.executeQuery();
-
-                // Jika hasil pencarian > 0, berarti barang sudah ada
-                if (rsCek.next() && rsCek.getInt("total") > 0) {
-                    JOptionPane.showMessageDialog(this,
-                            "Barang '" + namaBarangInput + "' sudah ada di database!\nSilakan gunakan tombol Edit jika ingin mengubah stok/harga.",
-                            "Data Ganda",
-                            JOptionPane.WARNING_MESSAGE);
-                    return; // Hentikan proses simpan di sini
+            // CEK DUPLIKAT
+            String cekSql = "SELECT 1 FROM barang WHERE nama_barang = ?";
+            try (PreparedStatement cek = conn.prepareStatement(cekSql)) {
+                cek.setString(1, nama);
+                if (cek.executeQuery().next()) {
+                    JOptionPane.showMessageDialog(this, "Barang sudah ada!");
+                    return;
                 }
             }
 
-            // 3. JIKA BELUM ADA, LANJUTKAN PROSES SIMPAN
-            String sqlInsert = "INSERT INTO barang (nama_barang, kategori, harga, stok) VALUES (?, ?, ?, ?)";
-            try (PreparedStatement pstmt = conn.prepareStatement(sqlInsert)) {
-                pstmt.setString(1, namaBarangInput);
-                pstmt.setString(2, cbKategori.getSelectedItem().toString());
-                pstmt.setInt(3, Integer.parseInt(hargaInput));
-                pstmt.setInt(4, Integer.parseInt(stokInput));
-
-                pstmt.executeUpdate();
-                JOptionPane.showMessageDialog(this, "Data barang berhasil disimpan!");
-
-                cariData(); // Refresh tabel menggunakan fungsi cariData() agar filter tetap jalan
-
-                // Bersihkan form
-                txtNama.setText("");
-                txtHarga.setText("");
-                txtStok.setText("");
-                txtNama.requestFocus();
+            // INSERT
+            String sql = "INSERT INTO barang (nama_barang, kategori, harga, stok) VALUES (?, ?, ?, ?)";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, nama);
+                ps.setString(2, kategori);
+                ps.setInt(3, harga);
+                ps.setInt(4, stok);
+                ps.executeUpdate();
             }
 
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Harga dan Stok harus berupa angka!", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Data berhasil disimpan!");
+            cariData();
+            resetForm();
+
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Gagal menyimpan data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, e.getMessage());
         }
     }//GEN-LAST:event_btnSimpanActionPerformed
 
@@ -778,33 +811,45 @@ private static final String DB_URL = "jdbc:sqlite:pos_db.db";
 
     private void btnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditActionPerformed
         if (idBarangTerpilih.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Pilih data di tabel terlebih dahulu!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Pilih data dulu!");
             return;
         }
 
-        // BARIS INI YANG SEBELUMNYA HILANG
-        String url = "jdbc:sqlite:pos_db.db";
-        String sql = "UPDATE barang SET nama_barang = ?, kategori = ?, harga = ?, stok = ? WHERE id_barang = ?";
+        try (Connection conn = getConnection()) {
+            String nama = txtNama.getText().trim();
+            if (nama.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Nama barang wajib diisi!");
+                return;
+            }
 
-        try (Connection conn = DriverManager.getConnection(url); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            Object kategoriObj = cbKategori.getSelectedItem();
+            if (kategoriObj == null) {
+                JOptionPane.showMessageDialog(this, "Kategori wajib dipilih!");
+                return;
+            }
 
-            pstmt.setString(1, txtNama.getText());
-            pstmt.setString(2, cbKategori.getSelectedItem().toString());
-            pstmt.setInt(3, Integer.parseInt(txtHarga.getText()));
-            pstmt.setInt(4, Integer.parseInt(txtStok.getText()));
-            pstmt.setString(5, idBarangTerpilih);
+            int harga = parseInteger(txtHarga.getText(), "Harga");
+            int stok = parseInteger(txtStok.getText(), "Stok");
+            validateNonNegative(harga, "Harga");
+            validateNonNegative(stok, "Stok");
+            String kategori = kategoriObj.toString();
 
-            pstmt.executeUpdate();
-            JOptionPane.showMessageDialog(this, "Data berhasil diupdate!");
+            String sql = "UPDATE barang SET nama_barang=?, kategori=?, harga=?, stok=? WHERE id_barang=?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, nama);
+                ps.setString(2, kategori);
+                ps.setInt(3, harga);
+                ps.setInt(4, stok);
+                ps.setString(5, idBarangTerpilih);
+                ps.executeUpdate();
+            }
+
+            JOptionPane.showMessageDialog(this, "Data diupdate!");
             cariData();
-
-            txtNama.setText("");
-            txtHarga.setText("");
-            txtStok.setText("");
-            idBarangTerpilih = "";
+            resetForm();
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Gagal mengupdate data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, e.getMessage());
         }
     }//GEN-LAST:event_btnEditActionPerformed
 
@@ -963,45 +1008,49 @@ private static final String DB_URL = "jdbc:sqlite:pos_db.db";
         }
     }//GEN-LAST:event_lblMenuKasirActionPerformed
 
+    private void btnLaporanActionPerformed(java.awt.event.ActionEvent evt) {
+        if (formLaporanAktif == null || !formLaporanAktif.isVisible()) {
+            formLaporanAktif = new ReportFrame();
+            formLaporanAktif.setVisible(true);
+        } else {
+            formLaporanAktif.toFront();
+            formLaporanAktif.requestFocus();
+        }
+    }
+
     private void btnSimpanUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanUserActionPerformed
-        String username = txtUsernameUser.getText().trim().toLowerCase(); // Otomatis huruf kecil semua
+        String username = txtUsernameUser.getText().trim().toLowerCase();
         String password = new String(txtPasswordUser.getPassword());
         String role = cbRoleUser.getSelectedItem().toString();
 
-        // 1. Validasi input
         if (username.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Username dan Password wajib diisi!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Username & Password wajib!");
             return;
         }
         if (username.contains(" ")) {
-            JOptionPane.showMessageDialog(this, "Username tidak boleh memakai spasi!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Username tidak boleh memakai spasi!");
             return;
         }
 
-        String url = "jdbc:sqlite:pos_db.db";
-        String sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
+        try (Connection conn = getConnection()) {
+            String sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, username);
+                ps.setString(2, PasswordUtil.hashPassword(password));
+                ps.setString(3, role);
+                ps.executeUpdate();
+            }
 
-        try (Connection conn = DriverManager.getConnection(url); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, username);
-            pstmt.setString(2, password);
-            pstmt.setString(3, role);
-            pstmt.executeUpdate();
-
-            JOptionPane.showMessageDialog(this, "Akun " + role + " dengan username '" + username + "' berhasil dibuat!");
-
-            // Bersihkan kotak isian dan refresh tabel
+            JOptionPane.showMessageDialog(this, "User berhasil dibuat!");
             txtUsernameUser.setText("");
             txtPasswordUser.setText("");
-            txtUsernameUser.requestFocus();
-            loadDataUser(); // Panggil fungsi load untuk update tabel di layar
+            loadDataUser();
 
         } catch (Exception e) {
-            // Tangani error jika username sudah dipakai
-            if (e.getMessage().contains("UNIQUE constraint failed")) {
-                JOptionPane.showMessageDialog(this, "Username '" + username + "' sudah dipakai!\nSilakan gunakan nama lain.", "Gagal", JOptionPane.ERROR_MESSAGE);
+            if (e.getMessage() != null && e.getMessage().contains("UNIQUE constraint failed")) {
+                JOptionPane.showMessageDialog(this, "Username '" + username + "' sudah dipakai!");
             } else {
-                JOptionPane.showMessageDialog(this, "Error Simpan User: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, e.getMessage());
             }
         }
     }//GEN-LAST:event_btnSimpanUserActionPerformed
@@ -1045,19 +1094,19 @@ private static final String DB_URL = "jdbc:sqlite:pos_db.db";
     }//GEN-LAST:event_btnHapusUserActionPerformed
 
     private void lblLinkSosmedMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblLinkSosmedMouseClicked
-       // Gunakan fungsi Desktop bawaan Java untuk memanggil Browser komputer
+        // Gunakan fungsi Desktop bawaan Java untuk memanggil Browser komputer
         try {
             // Ganti URL di bawah dengan link sosmed/WhatsApp toko Anda
-            String urlSosmed = "https://facebook.com/kudilmonster"; 
-            
+            String urlSosmed = "https://facebook.com/kudilmonster";
+
             java.awt.Desktop.getDesktop().browse(new java.net.URI(urlSosmed));
-            
+
         } catch (Exception e) {
             // Jika komputer tidak memiliki browser default atau terjadi error
-            javax.swing.JOptionPane.showMessageDialog(this, 
-                "Gagal membuka tautan. Pastikan komputer Anda terhubung ke internet!\nError: " + e.getMessage(), 
-                "Error Buka Link", 
-                javax.swing.JOptionPane.ERROR_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this,
+                    "Gagal membuka tautan. Pastikan komputer Anda terhubung ke internet!\nError: " + e.getMessage(),
+                    "Error Buka Link",
+                    javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_lblLinkSosmedMouseClicked
 
@@ -1092,6 +1141,7 @@ private static final String DB_URL = "jdbc:sqlite:pos_db.db";
     private javax.swing.JButton btnHapus;
     private javax.swing.JButton btnHapusKategori;
     private javax.swing.JButton btnHapusUser;
+    private javax.swing.JButton btnLaporan;
     private javax.swing.JButton btnSimpan;
     private javax.swing.JButton btnSimpanUser;
     private javax.swing.JButton btnTambahKategori;
