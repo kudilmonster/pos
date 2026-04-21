@@ -46,6 +46,7 @@ public class ReportFrame extends JFrame {
     private final JTextField txtTanggalAkhir = new JTextField(10);
     private final JLabel lblTotalTransaksi = new JLabel("0");
     private final JLabel lblOmzet = new JLabel("Rp 0");
+    private final JLabel lblLabaKotor = new JLabel("Rp 0");
     private final JLabel lblRataRata = new JLabel("Rp 0");
     private final JComboBox<String> cbChartMode = new JComboBox<>(new String[]{"Qty Terjual", "Omzet Item"});
     private final List<String> chartLabels = new ArrayList<>();
@@ -92,11 +93,13 @@ public class ReportFrame extends JFrame {
         panelFilter.add(new JLabel("Mode Chart:"));
         panelFilter.add(cbChartMode);
 
-        JPanel panelSummary = new JPanel(new GridLayout(1, 6, 8, 8));
+        JPanel panelSummary = new JPanel(new GridLayout(2, 4, 8, 8));
         panelSummary.add(new JLabel("Total Transaksi"));
         panelSummary.add(lblTotalTransaksi);
         panelSummary.add(new JLabel("Omzet"));
         panelSummary.add(lblOmzet);
+        panelSummary.add(new JLabel("Laba Kotor"));
+        panelSummary.add(lblLabaKotor);
         panelSummary.add(new JLabel("Rata-rata/Transaksi"));
         panelSummary.add(lblRataRata);
 
@@ -149,6 +152,12 @@ public class ReportFrame extends JFrame {
                 FROM transaksi
                 WHERE DATE(tanggal) BETWEEN ? AND ?
                 """;
+        String sqlLaba = """
+                SELECT COALESCE(SUM(d.laba_kotor), 0) AS laba_kotor
+                FROM detail_transaksi d
+                JOIN transaksi t ON t.id_transaksi = d.id_transaksi
+                WHERE DATE(t.tanggal) BETWEEN ? AND ?
+                """;
 
         String sqlTopItem = """
                 SELECT
@@ -175,10 +184,21 @@ public class ReportFrame extends JFrame {
                     if (rs.next()) {
                         int totalTransaksi = rs.getInt("total_transaksi");
                         int omzet = rs.getInt("omzet");
+                        int labaKotor = 0;
+                        try (PreparedStatement psLaba = conn.prepareStatement(sqlLaba)) {
+                            psLaba.setString(1, awal.toString());
+                            psLaba.setString(2, akhir.toString());
+                            try (ResultSet rsLaba = psLaba.executeQuery()) {
+                                if (rsLaba.next()) {
+                                    labaKotor = rsLaba.getInt("laba_kotor");
+                                }
+                            }
+                        }
                         int rataRata = totalTransaksi == 0 ? 0 : (int) Math.round((double) omzet / totalTransaksi);
 
                         lblTotalTransaksi.setText(String.valueOf(totalTransaksi));
                         lblOmzet.setText(formatRupiah(omzet));
+                        lblLabaKotor.setText(formatRupiah(labaKotor));
                         lblRataRata.setText(formatRupiah(rataRata));
                     }
                 }
@@ -291,6 +311,7 @@ public class ReportFrame extends JFrame {
         sb.append("Tanggal Akhir: ").append(txtTanggalAkhir.getText().trim()).append("\n");
         sb.append("Total Transaksi : ").append(lblTotalTransaksi.getText()).append("\n");
         sb.append("Omzet           : ").append(lblOmzet.getText()).append("\n");
+        sb.append("Laba Kotor      : ").append(lblLabaKotor.getText()).append("\n");
         sb.append("Rata-rata       : ").append(lblRataRata.getText()).append("\n");
         sb.append("----------------------------------------\n");
         sb.append(String.format("%-20s %8s %14s%n", "Nama Barang", "Qty", "Omzet"));

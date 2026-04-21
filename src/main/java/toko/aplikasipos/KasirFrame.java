@@ -1,9 +1,11 @@
 package toko.aplikasipos;
 
+import java.awt.Color;
 import java.sql.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.util.logging.Logger;
+
 
 public class KasirFrame extends javax.swing.JFrame {
 
@@ -11,7 +13,9 @@ public class KasirFrame extends javax.swing.JFrame {
     private static final Logger logger = Logger.getLogger(KasirFrame.class.getName());
     DefaultTableModel modelKeranjang;
     int totalBelanja = 0;
-
+    private int mouseX, mouseY;
+    
+    
     public KasirFrame() {
         initComponents();
 
@@ -19,6 +23,8 @@ public class KasirFrame extends javax.swing.JFrame {
         loadProfilToko();
         loadKategoriKasir();
         loadBarang();
+        setBackground(new Color(0, 0, 0, 0));
+        
     }
 
     // ================= INIT =================
@@ -293,53 +299,63 @@ public class KasirFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        customRoundedPanel2 = new toko.aplikasipos.CustomRoundedPanel();
+        PanelUtamaTransaksi = new toko.aplikasipos.CustomRoundedPanel();
         panelBayar = new toko.aplikasipos.CustomRoundedPanel();
-        panelKeranjang = new toko.aplikasipos.CustomRoundedPanel();
         btnSimpanTransaksi = new javax.swing.JButton();
-        customRoundedPanel5 = new toko.aplikasipos.CustomRoundedPanel();
-        cbJenisBayar = new javax.swing.JComboBox<>();
-        txtBayar = new javax.swing.JTextField();
-        spnDiskon = new javax.swing.JSpinner();
-        spnPajak = new javax.swing.JSpinner();
-        lblTotalHarga = new javax.swing.JLabel();
-        lblKembalian = new javax.swing.JLabel();
-        customRoundedPanel6 = new toko.aplikasipos.CustomRoundedPanel();
+        PanelProfil = new toko.aplikasipos.CustomRoundedPanel();
+        lblNamaToko = new javax.swing.JLabel();
+        lblAlamatToko = new javax.swing.JLabel();
+        PanelListBayar = new toko.aplikasipos.CustomRoundedPanel();
         txtJenisBayar = new javax.swing.JLabel();
         txtBayar1 = new javax.swing.JLabel();
         txtDiscount = new javax.swing.JLabel();
         txtPPN = new javax.swing.JLabel();
         txtTotal = new javax.swing.JLabel();
         txtKembalian = new javax.swing.JLabel();
+        PanelDuit = new toko.aplikasipos.CustomRoundedPanel();
+        cbJenisBayar = new javax.swing.JComboBox<>();
+        txtBayar = new javax.swing.JTextField();
+        spnDiskon = new javax.swing.JSpinner();
+        spnPajak = new javax.swing.JSpinner();
+        lblTotalHarga = new javax.swing.JLabel();
+        lblKembalian = new javax.swing.JLabel();
+        PanelTransaksi = new toko.aplikasipos.CustomRoundedPanel();
         panelBarang = new toko.aplikasipos.CustomRoundedPanel();
         txtKategori = new javax.swing.JLabel();
         txtPilih = new javax.swing.JLabel();
-        lblInfoStok = new javax.swing.JLabel();
+        Qty = new javax.swing.JLabel();
+        btnBatalKeranjang = new javax.swing.JButton();
         cbKategori = new javax.swing.JComboBox<>();
         cbPilihBarang = new javax.swing.JComboBox<>();
-        lblInfoHarga = new javax.swing.JLabel();
-        customRoundedPanel1 = new toko.aplikasipos.CustomRoundedPanel();
-        jLabel1 = new javax.swing.JLabel();
+        spnQty = new javax.swing.JSpinner();
         btnHapusItem = new javax.swing.JButton();
         btnTambahKeranjang = new javax.swing.JButton();
-        btnBatalKeranjang = new javax.swing.JButton();
-        customRoundedPanel3 = new toko.aplikasipos.CustomRoundedPanel();
+        lblInfoHarga = new javax.swing.JLabel();
+        lblInfoStok = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblKeranjang = new javax.swing.JTable();
-        customRoundedPanel4 = new toko.aplikasipos.CustomRoundedPanel();
-        customRoundedPanel7 = new toko.aplikasipos.CustomRoundedPanel();
-        lblNamaToko = new javax.swing.JLabel();
-        lblAlamatToko = new javax.swing.JLabel();
-        spnQty = new javax.swing.JSpinner();
+        jLabel1 = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setUndecorated(true);
         setResizable(false);
 
-        customRoundedPanel2.setBottomLeftRound(false);
-        customRoundedPanel2.setBottomRightRound(false);
-        customRoundedPanel2.setcolorEnd(new java.awt.Color(44, 44, 84));
-        customRoundedPanel2.setcolorStart(new java.awt.Color(44, 44, 84));
+        PanelUtamaTransaksi.setBottomLeftRound(false);
+        PanelUtamaTransaksi.setBottomRightRound(false);
+        PanelUtamaTransaksi.setcolorEnd(new java.awt.Color(44, 44, 84));
+        PanelUtamaTransaksi.setcolorStart(new java.awt.Color(44, 44, 84));
+        PanelUtamaTransaksi.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseDragged(java.awt.event.MouseEvent evt) {
+                PanelUtamaTransaksiMouseDragged(evt);
+            }
+        });
+        PanelUtamaTransaksi.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                PanelUtamaTransaksiMousePressed(evt);
+            }
+        });
 
+        panelBayar.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Pembayaran", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI Black", 1, 18), new java.awt.Color(255, 255, 255))); // NOI18N
         panelBayar.setBottomLeftRound(false);
         panelBayar.setBottomRightRound(false);
         panelBayar.setcolorEnd(new java.awt.Color(64, 64, 122));
@@ -347,108 +363,130 @@ public class KasirFrame extends javax.swing.JFrame {
         panelBayar.setTopLeftRound(false);
         panelBayar.setTopRightRound(false);
 
-        panelKeranjang.setBottomLeftRound(false);
-        panelKeranjang.setBottomRightRound(false);
-        panelKeranjang.setcolorEnd(new java.awt.Color(255, 255, 255));
-        panelKeranjang.setcolorStart(new java.awt.Color(255, 255, 255));
-        panelKeranjang.setTopLeftRound(false);
-        panelKeranjang.setTopRightRound(false);
-        panelKeranjang.setLayout(new java.awt.GridLayout(1, 0, 10, 10));
-
-        btnSimpanTransaksi.setBackground(new java.awt.Color(220, 221, 225));
-        btnSimpanTransaksi.setText("Simpan Transaksi");
+        btnSimpanTransaksi.setBackground(new java.awt.Color(5, 196, 107));
+        btnSimpanTransaksi.setFont(new java.awt.Font("Segoe UI Black", 1, 18)); // NOI18N
+        btnSimpanTransaksi.setForeground(new java.awt.Color(255, 255, 255));
+        btnSimpanTransaksi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/pay.png"))); // NOI18N
+        btnSimpanTransaksi.setText("BAYAR");
+        btnSimpanTransaksi.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnSimpanTransaksi.addActionListener(this::btnSimpanTransaksiActionPerformed);
-        panelKeranjang.add(btnSimpanTransaksi);
 
-        customRoundedPanel5.setBottomLeftRound(false);
-        customRoundedPanel5.setBottomRightRound(false);
-        customRoundedPanel5.setcolorEnd(new java.awt.Color(64, 64, 122));
-        customRoundedPanel5.setcolorStart(new java.awt.Color(64, 64, 122));
-        customRoundedPanel5.setTopLeftRound(false);
-        customRoundedPanel5.setTopRightRound(false);
-        customRoundedPanel5.setLayout(new java.awt.GridLayout(6, 0, 0, 5));
+        PanelProfil.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        PanelProfil.setBottomLeftRound(false);
+        PanelProfil.setBottomRightRound(false);
+        PanelProfil.setcolorEnd(new java.awt.Color(64, 64, 122));
+        PanelProfil.setcolorStart(new java.awt.Color(27, 20, 100));
+        PanelProfil.setTopLeftRound(false);
+        PanelProfil.setTopRightRound(false);
+        PanelProfil.setLayout(new java.awt.GridLayout(2, 0));
 
-        cbJenisBayar.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Tunai", "Debit", "Qris" }));
-        customRoundedPanel5.add(cbJenisBayar);
+        lblNamaToko.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        lblNamaToko.setForeground(new java.awt.Color(255, 255, 255));
+        lblNamaToko.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblNamaToko.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        PanelProfil.add(lblNamaToko);
 
-        txtBayar.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                txtBayarKeyReleased(evt);
-            }
-        });
-        customRoundedPanel5.add(txtBayar);
+        lblAlamatToko.setFont(new java.awt.Font("Times New Roman", 0, 12)); // NOI18N
+        lblAlamatToko.setForeground(new java.awt.Color(255, 255, 255));
+        lblAlamatToko.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblAlamatToko.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        PanelProfil.add(lblAlamatToko);
 
-        spnDiskon.setModel(new javax.swing.SpinnerNumberModel(0, 0, 100, 1));
-        spnDiskon.addChangeListener(this::spnDiskonStateChanged);
-        customRoundedPanel5.add(spnDiskon);
-
-        spnPajak.setModel(new javax.swing.SpinnerNumberModel(0, 0, 100, 1));
-        spnPajak.addChangeListener(this::spnPajakStateChanged);
-        customRoundedPanel5.add(spnPajak);
-
-        lblTotalHarga.setFont(new java.awt.Font("SimSun-ExtB", 1, 24)); // NOI18N
-        lblTotalHarga.setForeground(new java.awt.Color(255, 255, 255));
-        lblTotalHarga.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblTotalHarga.setText("Rp : ");
-        lblTotalHarga.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        customRoundedPanel5.add(lblTotalHarga);
-
-        lblKembalian.setFont(new java.awt.Font("SimSun-ExtB", 1, 24)); // NOI18N
-        lblKembalian.setForeground(new java.awt.Color(255, 255, 255));
-        lblKembalian.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblKembalian.setText("Rp : ");
-        lblKembalian.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        customRoundedPanel5.add(lblKembalian);
-
-        customRoundedPanel6.setBottomLeftRound(false);
-        customRoundedPanel6.setBottomRightRound(false);
-        customRoundedPanel6.setcolorEnd(new java.awt.Color(64, 64, 122));
-        customRoundedPanel6.setcolorStart(new java.awt.Color(64, 64, 122));
-        customRoundedPanel6.setTopLeftRound(false);
-        customRoundedPanel6.setTopRightRound(false);
-        customRoundedPanel6.setLayout(new java.awt.GridLayout(6, 0, 0, 5));
+        PanelListBayar.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        PanelListBayar.setBottomLeftRound(false);
+        PanelListBayar.setBottomRightRound(false);
+        PanelListBayar.setcolorEnd(new java.awt.Color(64, 64, 122));
+        PanelListBayar.setcolorStart(new java.awt.Color(64, 64, 122));
+        PanelListBayar.setTopLeftRound(false);
+        PanelListBayar.setTopRightRound(false);
+        PanelListBayar.setLayout(new java.awt.GridLayout(6, 0, 0, 5));
 
         txtJenisBayar.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 14)); // NOI18N
         txtJenisBayar.setForeground(new java.awt.Color(255, 255, 255));
         txtJenisBayar.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         txtJenisBayar.setText("Jenis Bayar");
         txtJenisBayar.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-        customRoundedPanel6.add(txtJenisBayar);
+        PanelListBayar.add(txtJenisBayar);
 
         txtBayar1.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 14)); // NOI18N
         txtBayar1.setForeground(new java.awt.Color(255, 255, 255));
         txtBayar1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         txtBayar1.setText("Bayar");
         txtBayar1.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-        customRoundedPanel6.add(txtBayar1);
+        PanelListBayar.add(txtBayar1);
 
         txtDiscount.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 14)); // NOI18N
         txtDiscount.setForeground(new java.awt.Color(255, 255, 255));
         txtDiscount.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         txtDiscount.setText("Diskon");
         txtDiscount.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-        customRoundedPanel6.add(txtDiscount);
+        PanelListBayar.add(txtDiscount);
 
         txtPPN.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 14)); // NOI18N
         txtPPN.setForeground(new java.awt.Color(255, 255, 255));
         txtPPN.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         txtPPN.setText("Pajak");
         txtPPN.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-        customRoundedPanel6.add(txtPPN);
+        PanelListBayar.add(txtPPN);
 
         txtTotal.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 14)); // NOI18N
         txtTotal.setForeground(new java.awt.Color(255, 255, 255));
         txtTotal.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         txtTotal.setText("Total Akhir");
         txtTotal.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-        customRoundedPanel6.add(txtTotal);
+        PanelListBayar.add(txtTotal);
 
         txtKembalian.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 14)); // NOI18N
         txtKembalian.setForeground(new java.awt.Color(255, 255, 255));
         txtKembalian.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         txtKembalian.setText("Kembalian");
         txtKembalian.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-        customRoundedPanel6.add(txtKembalian);
+        PanelListBayar.add(txtKembalian);
+
+        PanelDuit.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        PanelDuit.setBottomLeftRound(false);
+        PanelDuit.setBottomRightRound(false);
+        PanelDuit.setcolorEnd(new java.awt.Color(64, 64, 122));
+        PanelDuit.setcolorStart(new java.awt.Color(64, 64, 122));
+        PanelDuit.setTopLeftRound(false);
+        PanelDuit.setTopRightRound(false);
+        PanelDuit.setLayout(new java.awt.GridLayout(6, 0, 0, 5));
+
+        cbJenisBayar.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
+        cbJenisBayar.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Tunai", "Debit", "Qris" }));
+        PanelDuit.add(cbJenisBayar);
+
+        txtBayar.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
+        txtBayar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtBayarKeyReleased(evt);
+            }
+        });
+        PanelDuit.add(txtBayar);
+
+        spnDiskon.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
+        spnDiskon.setModel(new javax.swing.SpinnerNumberModel(0, 0, 100, 1));
+        spnDiskon.addChangeListener(this::spnDiskonStateChanged);
+        PanelDuit.add(spnDiskon);
+
+        spnPajak.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
+        spnPajak.setModel(new javax.swing.SpinnerNumberModel(0, 0, 100, 1));
+        spnPajak.addChangeListener(this::spnPajakStateChanged);
+        PanelDuit.add(spnPajak);
+
+        lblTotalHarga.setFont(new java.awt.Font("SimSun-ExtB", 1, 24)); // NOI18N
+        lblTotalHarga.setForeground(new java.awt.Color(255, 255, 255));
+        lblTotalHarga.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblTotalHarga.setText("Rp : ");
+        lblTotalHarga.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        PanelDuit.add(lblTotalHarga);
+
+        lblKembalian.setFont(new java.awt.Font("SimSun-ExtB", 1, 24)); // NOI18N
+        lblKembalian.setForeground(new java.awt.Color(255, 255, 255));
+        lblKembalian.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblKembalian.setText("Rp : ");
+        lblKembalian.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        PanelDuit.add(lblKembalian);
 
         javax.swing.GroupLayout panelBayarLayout = new javax.swing.GroupLayout(panelBayar);
         panelBayar.setLayout(panelBayarLayout);
@@ -456,57 +494,87 @@ public class KasirFrame extends javax.swing.JFrame {
             panelBayarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelBayarLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(panelBayarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(panelBayarLayout.createSequentialGroup()
-                        .addComponent(panelKeranjang, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addContainerGap())
-                    .addGroup(panelBayarLayout.createSequentialGroup()
-                        .addComponent(customRoundedPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(customRoundedPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, 295, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 6, Short.MAX_VALUE))))
+                .addComponent(PanelProfil, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelBayarLayout.createSequentialGroup()
+                .addContainerGap(248, Short.MAX_VALUE)
+                .addComponent(btnSimpanTransaksi, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(22, 22, 22))
+            .addGroup(panelBayarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(panelBayarLayout.createSequentialGroup()
+                    .addGap(9, 9, 9)
+                    .addComponent(PanelListBayar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(18, 18, 18)
+                    .addComponent(PanelDuit, javax.swing.GroupLayout.DEFAULT_SIZE, 248, Short.MAX_VALUE)
+                    .addContainerGap()))
         );
         panelBayarLayout.setVerticalGroup(
             panelBayarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelBayarLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(panelBayarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(customRoundedPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
-                    .addComponent(customRoundedPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(panelKeranjang, javax.swing.GroupLayout.DEFAULT_SIZE, 78, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(PanelProfil, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 313, Short.MAX_VALUE)
+                .addComponent(btnSimpanTransaksi)
+                .addGap(32, 32, 32))
+            .addGroup(panelBayarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(panelBayarLayout.createSequentialGroup()
+                    .addGap(111, 111, 111)
+                    .addGroup(panelBayarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(PanelListBayar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(PanelDuit, javax.swing.GroupLayout.DEFAULT_SIZE, 261, Short.MAX_VALUE))
+                    .addGap(112, 112, 112)))
         );
 
+        PanelTransaksi.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Transaksi Penjualan", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI Black", 1, 18), new java.awt.Color(255, 255, 255))); // NOI18N
+        PanelTransaksi.setBottomLeftRound(false);
+        PanelTransaksi.setBottomRightRound(false);
+        PanelTransaksi.setcolorEnd(new java.awt.Color(64, 64, 122));
+        PanelTransaksi.setcolorStart(new java.awt.Color(64, 64, 122));
+        PanelTransaksi.setTopLeftRound(false);
+        PanelTransaksi.setTopRightRound(false);
+
         panelBarang.setBackground(new java.awt.Color(189, 195, 199));
+        panelBarang.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
         panelBarang.setBottomLeftRound(false);
         panelBarang.setBottomRightRound(false);
         panelBarang.setcolorEnd(new java.awt.Color(64, 64, 122));
-        panelBarang.setcolorStart(new java.awt.Color(64, 64, 122));
+        panelBarang.setcolorStart(new java.awt.Color(27, 20, 100));
         panelBarang.setTopLeftRound(false);
         panelBarang.setTopRightRound(false);
-        panelBarang.setLayout(new java.awt.GridLayout(2, 3, 10, 10));
+        panelBarang.setLayout(new java.awt.GridLayout(3, 0, 10, 10));
 
-        txtKategori.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 12)); // NOI18N
+        txtKategori.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         txtKategori.setForeground(new java.awt.Color(255, 255, 255));
         txtKategori.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         txtKategori.setText("Pilih Kategori");
+        txtKategori.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         txtKategori.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         panelBarang.add(txtKategori);
 
-        txtPilih.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 12)); // NOI18N
+        txtPilih.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         txtPilih.setForeground(new java.awt.Color(255, 255, 255));
         txtPilih.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         txtPilih.setText("Pilih Barang");
+        txtPilih.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         txtPilih.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         panelBarang.add(txtPilih);
 
-        lblInfoStok.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 14)); // NOI18N
-        lblInfoStok.setForeground(new java.awt.Color(255, 255, 255));
-        lblInfoStok.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblInfoStok.setText("Sisa Stok: 0");
-        lblInfoStok.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        panelBarang.add(lblInfoStok);
+        Qty.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
+        Qty.setForeground(new java.awt.Color(255, 255, 255));
+        Qty.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        Qty.setText("Qty");
+        Qty.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
+        Qty.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        panelBarang.add(Qty);
+
+        btnBatalKeranjang.setBackground(new java.awt.Color(189, 195, 199));
+        btnBatalKeranjang.setFont(new java.awt.Font("Segoe UI Semibold", 0, 12)); // NOI18N
+        btnBatalKeranjang.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/hapusall.png"))); // NOI18N
+        btnBatalKeranjang.setText(" HAPUS ALL");
+        btnBatalKeranjang.setActionCommand("Kosongkan Keranjang");
+        btnBatalKeranjang.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnBatalKeranjang.addActionListener(this::btnBatalKeranjangActionPerformed);
+        panelBarang.add(btnBatalKeranjang);
 
         cbKategori.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cbKategori.addActionListener(this::cbKategoriActionPerformed);
@@ -516,51 +584,42 @@ public class KasirFrame extends javax.swing.JFrame {
         cbPilihBarang.addActionListener(this::cbPilihBarangActionPerformed);
         panelBarang.add(cbPilihBarang);
 
-        lblInfoHarga.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 14)); // NOI18N
+        spnQty.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        spnQty.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
+        panelBarang.add(spnQty);
+
+        btnHapusItem.setBackground(new java.awt.Color(255, 168, 1));
+        btnHapusItem.setFont(new java.awt.Font("Segoe UI Semibold", 0, 12)); // NOI18N
+        btnHapusItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/hapus.png"))); // NOI18N
+        btnHapusItem.setText("HAPUS ITEM");
+        btnHapusItem.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnHapusItem.addActionListener(this::btnHapusItemActionPerformed);
+        panelBarang.add(btnHapusItem);
+
+        btnTambahKeranjang.setBackground(new java.awt.Color(75, 207, 250));
+        btnTambahKeranjang.setFont(new java.awt.Font("Segoe UI Semibold", 0, 12)); // NOI18N
+        btnTambahKeranjang.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/keranjang.png"))); // NOI18N
+        btnTambahKeranjang.setText("TAMBAH");
+        btnTambahKeranjang.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnTambahKeranjang.addActionListener(this::btnTambahKeranjangActionPerformed);
+        panelBarang.add(btnTambahKeranjang);
+
+        lblInfoHarga.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         lblInfoHarga.setForeground(new java.awt.Color(255, 255, 255));
         lblInfoHarga.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblInfoHarga.setText("Harga: Rp. 0");
+        lblInfoHarga.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         lblInfoHarga.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         panelBarang.add(lblInfoHarga);
 
-        customRoundedPanel1.setBottomLeftRound(false);
-        customRoundedPanel1.setBottomRightRound(false);
-        customRoundedPanel1.setcolorEnd(new java.awt.Color(64, 64, 122));
-        customRoundedPanel1.setcolorStart(new java.awt.Color(64, 64, 122));
-        customRoundedPanel1.setTopLeftRound(false);
-        customRoundedPanel1.setTopRightRound(false);
-        customRoundedPanel1.setLayout(new java.awt.GridLayout(2, 0, 5, 5));
+        lblInfoStok.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
+        lblInfoStok.setForeground(new java.awt.Color(255, 255, 255));
+        lblInfoStok.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblInfoStok.setText("Sisa Stok: 0");
+        lblInfoStok.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
+        lblInfoStok.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        panelBarang.add(lblInfoStok);
 
-        jLabel1.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
-        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("Qty");
-        jLabel1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        customRoundedPanel1.add(jLabel1);
-
-        btnHapusItem.setBackground(new java.awt.Color(220, 221, 225));
-        btnHapusItem.setText("Hapus Item");
-        btnHapusItem.addActionListener(this::btnHapusItemActionPerformed);
-        customRoundedPanel1.add(btnHapusItem);
-
-        btnTambahKeranjang.setBackground(new java.awt.Color(220, 221, 225));
-        btnTambahKeranjang.setText("Tambah Keranjang");
-        btnTambahKeranjang.addActionListener(this::btnTambahKeranjangActionPerformed);
-        customRoundedPanel1.add(btnTambahKeranjang);
-
-        btnBatalKeranjang.setBackground(new java.awt.Color(220, 221, 225));
-        btnBatalKeranjang.setText("Batal");
-        btnBatalKeranjang.addActionListener(this::btnBatalKeranjangActionPerformed);
-        customRoundedPanel1.add(btnBatalKeranjang);
-
-        customRoundedPanel3.setBottomLeftRound(false);
-        customRoundedPanel3.setBottomRightRound(false);
-        customRoundedPanel3.setcolorEnd(new java.awt.Color(64, 64, 122));
-        customRoundedPanel3.setcolorStart(new java.awt.Color(64, 64, 122));
-        customRoundedPanel3.setTopLeftRound(false);
-        customRoundedPanel3.setTopRightRound(false);
-
-        tblKeranjang.setBackground(new java.awt.Color(220, 221, 225));
         tblKeranjang.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         tblKeranjang.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -579,121 +638,74 @@ public class KasirFrame extends javax.swing.JFrame {
         tblKeranjang.setShowGrid(true);
         jScrollPane1.setViewportView(tblKeranjang);
 
-        javax.swing.GroupLayout customRoundedPanel3Layout = new javax.swing.GroupLayout(customRoundedPanel3);
-        customRoundedPanel3.setLayout(customRoundedPanel3Layout);
-        customRoundedPanel3Layout.setHorizontalGroup(
-            customRoundedPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-            .addGroup(customRoundedPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(customRoundedPanel3Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
-                    .addContainerGap()))
-        );
-        customRoundedPanel3Layout.setVerticalGroup(
-            customRoundedPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-            .addGroup(customRoundedPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(customRoundedPanel3Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
-                    .addContainerGap()))
-        );
-
-        customRoundedPanel4.setBottomLeftRound(false);
-        customRoundedPanel4.setBottomRightRound(false);
-        customRoundedPanel4.setcolorEnd(new java.awt.Color(22, 160, 133));
-        customRoundedPanel4.setcolorStart(new java.awt.Color(22, 160, 133));
-
-        customRoundedPanel7.setBottomLeftRound(false);
-        customRoundedPanel7.setBottomRightRound(false);
-        customRoundedPanel7.setcolorEnd(new java.awt.Color(22, 160, 133));
-        customRoundedPanel7.setcolorStart(new java.awt.Color(22, 160, 133));
-        customRoundedPanel7.setTopRightRound(false);
-        customRoundedPanel7.setLayout(new java.awt.GridLayout(2, 0));
-
-        lblNamaToko.setFont(new java.awt.Font("Times New Roman", 1, 14)); // NOI18N
-        lblNamaToko.setForeground(new java.awt.Color(255, 255, 255));
-        lblNamaToko.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblNamaToko.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        customRoundedPanel7.add(lblNamaToko);
-
-        lblAlamatToko.setForeground(new java.awt.Color(255, 255, 255));
-        lblAlamatToko.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblAlamatToko.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        customRoundedPanel7.add(lblAlamatToko);
-
-        javax.swing.GroupLayout customRoundedPanel4Layout = new javax.swing.GroupLayout(customRoundedPanel4);
-        customRoundedPanel4.setLayout(customRoundedPanel4Layout);
-        customRoundedPanel4Layout.setHorizontalGroup(
-            customRoundedPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(customRoundedPanel4Layout.createSequentialGroup()
-                .addComponent(customRoundedPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, 201, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
-        );
-        customRoundedPanel4Layout.setVerticalGroup(
-            customRoundedPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, customRoundedPanel4Layout.createSequentialGroup()
-                .addGap(0, 22, Short.MAX_VALUE)
-                .addComponent(customRoundedPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
-
-        spnQty.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-        spnQty.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
-
-        javax.swing.GroupLayout customRoundedPanel2Layout = new javax.swing.GroupLayout(customRoundedPanel2);
-        customRoundedPanel2.setLayout(customRoundedPanel2Layout);
-        customRoundedPanel2Layout.setHorizontalGroup(
-            customRoundedPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(customRoundedPanel2Layout.createSequentialGroup()
+        javax.swing.GroupLayout PanelTransaksiLayout = new javax.swing.GroupLayout(PanelTransaksi);
+        PanelTransaksi.setLayout(PanelTransaksiLayout);
+        PanelTransaksiLayout.setHorizontalGroup(
+            PanelTransaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, PanelTransaksiLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(customRoundedPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(customRoundedPanel2Layout.createSequentialGroup()
-                        .addComponent(customRoundedPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addContainerGap())
-                    .addGroup(customRoundedPanel2Layout.createSequentialGroup()
-                        .addGroup(customRoundedPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(customRoundedPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(panelBarang, javax.swing.GroupLayout.DEFAULT_SIZE, 512, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(customRoundedPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(customRoundedPanel2Layout.createSequentialGroup()
-                                .addComponent(spnQty, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(customRoundedPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 292, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(customRoundedPanel2Layout.createSequentialGroup()
-                                .addComponent(panelBayar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addContainerGap())))))
+                .addGroup(PanelTransaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane1)
+                    .addComponent(panelBarang, javax.swing.GroupLayout.DEFAULT_SIZE, 677, Short.MAX_VALUE))
+                .addContainerGap())
         );
-        customRoundedPanel2Layout.setVerticalGroup(
-            customRoundedPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, customRoundedPanel2Layout.createSequentialGroup()
+        PanelTransaksiLayout.setVerticalGroup(
+            PanelTransaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(PanelTransaksiLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(customRoundedPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(panelBarang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(customRoundedPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(panelBarang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(spnQty, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(customRoundedPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(customRoundedPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(customRoundedPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(panelBayar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(37, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 311, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jLabel1.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        jLabel1.setForeground(new java.awt.Color(204, 204, 204));
+        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel1.setText("sanFK POS");
+        jLabel1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jLabel1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jLabel1MouseClicked(evt);
+            }
+        });
+
+        javax.swing.GroupLayout PanelUtamaTransaksiLayout = new javax.swing.GroupLayout(PanelUtamaTransaksi);
+        PanelUtamaTransaksi.setLayout(PanelUtamaTransaksiLayout);
+        PanelUtamaTransaksiLayout.setHorizontalGroup(
+            PanelUtamaTransaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, PanelUtamaTransaksiLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(PanelTransaksi, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(panelBayar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, PanelUtamaTransaksiLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel1)
+                .addGap(15, 15, 15))
+        );
+        PanelUtamaTransaksiLayout.setVerticalGroup(
+            PanelUtamaTransaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(PanelUtamaTransaksiLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(PanelUtamaTransaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(PanelTransaksi, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(panelBayar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(customRoundedPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(PanelUtamaTransaksi, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(customRoundedPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(PanelUtamaTransaksi, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         pack();
@@ -842,7 +854,7 @@ public class KasirFrame extends javax.swing.JFrame {
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
             try {
-                String sqlTransaksi = "INSERT INTO transaksi (total_harga, diskon_persen, pajak_persen, bayar, kembalian) VALUES (?, ?, ?, ?, ?)";
+                String sqlTransaksi = "INSERT INTO transaksi (total_harga, diskon_persen, pajak_persen, bayar, kembalian, status_transaksi, updated_by) VALUES (?, ?, ?, ?, ?, 'NORMAL', ?)";
                 int idTransaksi;
                 try (PreparedStatement pstTrans = conn.prepareStatement(sqlTransaksi, Statement.RETURN_GENERATED_KEYS)) {
                     pstTrans.setInt(1, totalBelanja);
@@ -850,6 +862,7 @@ public class KasirFrame extends javax.swing.JFrame {
                     pstTrans.setInt(3, nilaiPajak);
                     pstTrans.setInt(4, bayar);
                     pstTrans.setInt(5, kembalian);
+                    pstTrans.setString(6, namaKasir);
                     pstTrans.executeUpdate();
 
                     ResultSet rsKeys = pstTrans.getGeneratedKeys();
@@ -859,22 +872,35 @@ public class KasirFrame extends javax.swing.JFrame {
                     idTransaksi = rsKeys.getInt(1);
                 }
 
-                String sqlDetail = "INSERT INTO detail_transaksi (id_transaksi, nama_barang, harga, qty, subtotal) VALUES (?, ?, ?, ?, ?)";
+                String sqlDetail = "INSERT INTO detail_transaksi (id_transaksi, nama_barang, harga, qty, subtotal, harga_modal, laba_kotor) VALUES (?, ?, ?, ?, ?, ?, ?)";
                 String sqlUpdateStok = "UPDATE barang SET stok = stok - ? WHERE nama_barang = ? AND stok >= ?";
+                String sqlModal = "SELECT COALESCE(harga_modal, 0) FROM barang WHERE nama_barang = ?";
 
-                try (PreparedStatement pstDetail = conn.prepareStatement(sqlDetail); PreparedStatement pstUpdateStok = conn.prepareStatement(sqlUpdateStok)) {
+                try (PreparedStatement pstDetail = conn.prepareStatement(sqlDetail);
+                     PreparedStatement pstUpdateStok = conn.prepareStatement(sqlUpdateStok);
+                     PreparedStatement pstModal = conn.prepareStatement(sqlModal)) {
                     int jumlahBaris = modelKeranjang.getRowCount();
                     for (int i = 0; i < jumlahBaris; i++) {
                         String nama = modelKeranjang.getValueAt(i, 0).toString();
                         int harga = Integer.parseInt(modelKeranjang.getValueAt(i, 1).toString());
                         int qty = Integer.parseInt(modelKeranjang.getValueAt(i, 2).toString());
                         int subtotal = Integer.parseInt(modelKeranjang.getValueAt(i, 3).toString());
+                        int hargaModal = 0;
+                        pstModal.setString(1, nama);
+                        try (ResultSet rsModal = pstModal.executeQuery()) {
+                            if (rsModal.next()) {
+                                hargaModal = rsModal.getInt(1);
+                            }
+                        }
+                        int labaKotor = subtotal - (qty * hargaModal);
 
                         pstDetail.setInt(1, idTransaksi);
                         pstDetail.setString(2, nama);
                         pstDetail.setInt(3, harga);
                         pstDetail.setInt(4, qty);
                         pstDetail.setInt(5, subtotal);
+                        pstDetail.setInt(6, hargaModal);
+                        pstDetail.setInt(7, labaKotor);
                         pstDetail.executeUpdate();
 
                         pstUpdateStok.setInt(1, qty);
@@ -968,6 +994,21 @@ public class KasirFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnBatalKeranjangActionPerformed
 
+    private void PanelUtamaTransaksiMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_PanelUtamaTransaksiMousePressed
+       mouseX = evt.getX();
+        mouseY = evt.getY();
+    }//GEN-LAST:event_PanelUtamaTransaksiMousePressed
+
+    private void PanelUtamaTransaksiMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_PanelUtamaTransaksiMouseDragged
+        int x = evt.getXOnScreen();
+        int y = evt.getYOnScreen();
+        setLocation(x - mouseX, y - mouseY);
+    }//GEN-LAST:event_PanelUtamaTransaksiMouseDragged
+
+    private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel1MouseClicked
+       System.exit(0);
+    }//GEN-LAST:event_jLabel1MouseClicked
+
     public static void main(String args[]) {
 
         try {
@@ -987,6 +1028,12 @@ public class KasirFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private toko.aplikasipos.CustomRoundedPanel PanelDuit;
+    private toko.aplikasipos.CustomRoundedPanel PanelListBayar;
+    private toko.aplikasipos.CustomRoundedPanel PanelProfil;
+    private toko.aplikasipos.CustomRoundedPanel PanelTransaksi;
+    private toko.aplikasipos.CustomRoundedPanel PanelUtamaTransaksi;
+    private javax.swing.JLabel Qty;
     private javax.swing.JButton btnBatalKeranjang;
     private javax.swing.JButton btnHapusItem;
     private javax.swing.JButton btnSimpanTransaksi;
@@ -994,13 +1041,6 @@ public class KasirFrame extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> cbJenisBayar;
     private javax.swing.JComboBox<String> cbKategori;
     private javax.swing.JComboBox<String> cbPilihBarang;
-    private toko.aplikasipos.CustomRoundedPanel customRoundedPanel1;
-    private toko.aplikasipos.CustomRoundedPanel customRoundedPanel2;
-    private toko.aplikasipos.CustomRoundedPanel customRoundedPanel3;
-    private toko.aplikasipos.CustomRoundedPanel customRoundedPanel4;
-    private toko.aplikasipos.CustomRoundedPanel customRoundedPanel5;
-    private toko.aplikasipos.CustomRoundedPanel customRoundedPanel6;
-    private toko.aplikasipos.CustomRoundedPanel customRoundedPanel7;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblAlamatToko;
@@ -1011,7 +1051,6 @@ public class KasirFrame extends javax.swing.JFrame {
     private javax.swing.JLabel lblTotalHarga;
     private toko.aplikasipos.CustomRoundedPanel panelBarang;
     private toko.aplikasipos.CustomRoundedPanel panelBayar;
-    private toko.aplikasipos.CustomRoundedPanel panelKeranjang;
     private javax.swing.JSpinner spnDiskon;
     private javax.swing.JSpinner spnPajak;
     private javax.swing.JSpinner spnQty;
