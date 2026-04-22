@@ -23,7 +23,8 @@ public class LoginFrame extends javax.swing.JFrame {
         initComponents();
         this.setLocationRelativeTo(null); // (Opsional) Agar form di tengah layar
         setBackground(new Color(0, 0, 0, 0));
-
+        AppUtil.setWindowIcon(this);
+        this.setLocationRelativeTo(null);
     }
 
     @SuppressWarnings("unchecked")
@@ -38,13 +39,14 @@ public class LoginFrame extends javax.swing.JFrame {
         btnLogin = new javax.swing.JButton();
         txtPassword = new javax.swing.JPasswordField();
         jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setUndecorated(true);
         setResizable(false);
 
-        customRoundedPanel1.setcolorEnd(new java.awt.Color(25, 42, 86));
-        customRoundedPanel1.setcolorStart(new java.awt.Color(0, 168, 255));
+        customRoundedPanel1.setcolorEnd(new java.awt.Color(72, 126, 176));
+        customRoundedPanel1.setcolorStart(new java.awt.Color(39, 60, 117));
 
         jLabel1.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
@@ -71,6 +73,8 @@ public class LoginFrame extends javax.swing.JFrame {
         jLabel4.setForeground(new java.awt.Color(204, 204, 204));
         jLabel4.setText("sanFK POS");
 
+        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/logofk32.png"))); // NOI18N
+
         javax.swing.GroupLayout customRoundedPanel1Layout = new javax.swing.GroupLayout(customRoundedPanel1);
         customRoundedPanel1.setLayout(customRoundedPanel1Layout);
         customRoundedPanel1Layout.setHorizontalGroup(
@@ -81,22 +85,30 @@ public class LoginFrame extends javax.swing.JFrame {
                     .addComponent(jLabel1)
                     .addComponent(jLabel2))
                 .addGap(44, 44, 44)
-                .addGroup(customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel3)
-                    .addGroup(customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(jLabel4)
-                        .addGroup(customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(txtUsername)
-                            .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 193, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(btnLogin))))
+                .addGroup(customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(customRoundedPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addGap(80, 80, 80)
+                        .addComponent(jLabel5))
+                    .addComponent(jLabel4)
+                    .addGroup(customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(txtUsername)
+                        .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 193, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(btnLogin)))
                 .addContainerGap(97, Short.MAX_VALUE))
         );
         customRoundedPanel1Layout.setVerticalGroup(
             customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(customRoundedPanel1Layout.createSequentialGroup()
-                .addGap(28, 28, 28)
-                .addComponent(jLabel3)
-                .addGap(20, 20, 20)
+                .addGroup(customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(customRoundedPanel1Layout.createSequentialGroup()
+                        .addGap(28, 28, 28)
+                        .addComponent(jLabel3)
+                        .addGap(20, 20, 20))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, customRoundedPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
                 .addComponent(jLabel4)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -217,13 +229,39 @@ public class LoginFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnLoginActionPerformed
 
     private void txtPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtPasswordActionPerformed
-       btnLogin.doClick();
+        btnLogin.doClick();
     }//GEN-LAST:event_txtPasswordActionPerformed
 
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
+                try {
+            // 1. Aktifkan Skincare macOS Dark
+            com.formdev.flatlaf.themes.FlatMacDarkLaf.setup();
+
+            // 2. Tweak UI: Bikin sudut tombol dan kotak input lebih bulat (Apple Style)
+            javax.swing.UIManager.put("Button.arc", 15);
+            javax.swing.UIManager.put("Component.arc", 15);
+            javax.swing.UIManager.put("TextComponent.arc", 15);
+
+            // 3. Tweak ScrollBar agar lebih tipis dan modern
+            javax.swing.UIManager.put("ScrollBar.thumbArc", 999);
+            javax.swing.UIManager.put("ScrollBar.width", 10);
+
+ /*       } catch (Exception ex) {
+            System.err.println("Gagal memuat tema Mac: " + ex.getMessage());
+        }
+
+        java.awt.EventQueue.invokeLater(() -> {
+            new MainDashboard().setVisible(true);
+        });
+*/
+ } catch (Exception ex) {
+            System.err.println("Gagal memuat tema Mac: " + ex.getMessage());
+        }
+        
+        
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 boolean tokoSudahSetup = false;
@@ -270,6 +308,7 @@ public class LoginFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JPasswordField txtPassword;
     private javax.swing.JTextField txtUsername;
     // End of variables declaration//GEN-END:variables

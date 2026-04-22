@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -19,31 +20,36 @@ import javax.swing.table.DefaultTableModel;
 public class StockAlertFrame extends JFrame {
 
     private static final String DB_URL = "jdbc:sqlite:pos_db.db";
+    
+    // 1. TAMBAH KOLOM JUAL DAN MARGIN
     private final DefaultTableModel model = new DefaultTableModel(
-            new String[]{"ID", "Nama Barang", "Stok", "Stok Minimum", "Status"}, 0
+            new String[]{"ID", "Nama Barang", "Harga Beli", "Harga Jual", "Margin", "Stok", "Status"}, 0
     ) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
         }
     };
+    
     private final JTable table = new JTable(model);
     private final JTextField txtMin = new JTextField(5);
 
     public StockAlertFrame() {
-        setTitle("Notifikasi Stok Minimum");
-        setSize(760, 480);
+        setTitle("Analisis Stok & Margin Keuntungan");
+        setSize(950, 500); 
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        
+        AppUtil.setWindowIcon(this);
         initUi();
         loadData();
     }
 
     private void initUi() {
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton btnRefresh = new JButton("Refresh");
-        JButton btnUpdateMin = new JButton("Set Min untuk Item Terpilih");
-        top.add(new JLabel("Min Baru:"));
+        JButton btnRefresh = new JButton("Refresh Data");
+        JButton btnUpdateMin = new JButton("Atur Stok Minimum");
+        top.add(new JLabel("Batas Stok Minimum:"));
         top.add(txtMin);
         top.add(btnUpdateMin);
         top.add(btnRefresh);
@@ -58,59 +64,70 @@ public class StockAlertFrame extends JFrame {
 
     private void loadData() {
         model.setRowCount(0);
+        
+        // 2. QUERY SQL: Mengambil harga_modal (Beli) dan harga (Jual)
         String sql = """
-                SELECT id_barang, nama_barang, stok, COALESCE(stok_minimum, 5) AS stok_minimum
+                SELECT id_barang, nama_barang, 
+                       COALESCE(harga_modal, 0) AS beli, 
+                       COALESCE(harga, 0) AS jual, 
+                       stok, 
+                       COALESCE(stok_minimum, 5) AS min
                 FROM barang
                 ORDER BY (stok <= COALESCE(stok_minimum, 5)) DESC, nama_barang ASC
                 """;
+                
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
+             
             while (rs.next()) {
+                int beli = rs.getInt("beli");
+                int jual = rs.getInt("jual");
+                int margin = jual - beli;
                 int stok = rs.getInt("stok");
-                int min = rs.getInt("stok_minimum");
-                String status = stok <= min ? "KRITIS" : "AMAN";
+                int min = rs.getInt("min");
+                
+                String status = stok <= min ? "⚠️ RE-STOCK" : "✅ AMAN";
+                
                 model.addRow(new Object[]{
                     rs.getInt("id_barang"),
                     rs.getString("nama_barang"),
+                    formatRupiah(beli),
+                    formatRupiah(jual),
+                    formatRupiah(margin),
                     stok,
-                    min,
                     status
                 });
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Gagal load stok minimum: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Gagal memuat data: " + e.getMessage());
         }
+    }
+
+    private String formatRupiah(int angka) {
+        return "Rp " + String.format("%,d", angka).replace(',', '.');
     }
 
     private void updateMinimum() {
         int row = table.getSelectedRow();
         if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Pilih barang dulu.");
+            JOptionPane.showMessageDialog(this, "Pilih barang di tabel terlebih dahulu.");
             return;
         }
-        int minBaru;
         try {
-            minBaru = Integer.parseInt(txtMin.getText().trim());
-            if (minBaru < 0) {
-                throw new NumberFormatException();
+            int minBaru = Integer.parseInt(txtMin.getText().trim());
+            int idBarang = (int) model.getValueAt(row, 0);
+            
+            try (Connection conn = DriverManager.getConnection(DB_URL);
+                 PreparedStatement ps = conn.prepareStatement("UPDATE barang SET stok_minimum = ? WHERE id_barang = ?")) {
+                ps.setInt(1, minBaru);
+                ps.setInt(2, idBarang);
+                ps.executeUpdate();
+                loadData();
+                txtMin.setText("");
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Min baru harus angka >= 0.");
-            return;
-        }
-
-        int idBarang = Integer.parseInt(String.valueOf(model.getValueAt(row, 0)));
-        String sql = "UPDATE barang SET stok_minimum = ? WHERE id_barang = ?";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, minBaru);
-            ps.setInt(2, idBarang);
-            ps.executeUpdate();
-            JOptionPane.showMessageDialog(this, "Stok minimum diperbarui.");
-            loadData();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Gagal update stok minimum: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Input harus angka valid.");
         }
     }
 }

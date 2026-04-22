@@ -32,10 +32,10 @@ public class MainFrame extends javax.swing.JFrame {
             throw new Exception(fieldName + " tidak boleh negatif!");
         }
     }
-    
+
     private KasirFrame formKasirAktif = null;
     private AdminWorkspaceFrame formWorkspaceAktif = null;
-    
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
     private String idBarangTerpilih = "";
 
@@ -47,8 +47,10 @@ public class MainFrame extends javax.swing.JFrame {
         loadDataUser();
         loadKategori();    // <- TAMBAHKAN BARIS INI: Mengisi ComboBox
         tampilkanData();   // Menampilkan data di tabel
-        
+
         setBackground(new Color(0, 0, 0, 0));
+        AppUtil.setWindowIcon(this);
+        this.setLocationRelativeTo(null);
     }
 
     private void applyRolePermissions() {
@@ -64,13 +66,6 @@ public class MainFrame extends javax.swing.JFrame {
         btnLaporan.setEnabled(false);
     }
 
-    private void resetForm() {
-        txtNama.setText("");
-        txtHarga.setText("");
-        txtStok.setText("");
-        cbKategori.setSelectedIndex(0);
-        idBarangTerpilih = "";
-    }
 
     private boolean tableHasColumn(Connection conn, String tableName, String columnName) throws Exception {
         DatabaseMetaData meta = conn.getMetaData();
@@ -232,9 +227,10 @@ public class MainFrame extends javax.swing.JFrame {
             }
         };
 
-        model.addColumn("ID Barang");
+model.addColumn("ID Barang");
         model.addColumn("Nama Barang");
-        model.addColumn("Kategori"); // Kolom baru
+        model.addColumn("Barcode"); // TAMBAHAN KOLOM BARCODE DI TABEL
+        model.addColumn("Kategori");
         model.addColumn("Harga");
         model.addColumn("Stok");
 
@@ -244,11 +240,15 @@ public class MainFrame extends javax.swing.JFrame {
 
         try (Connection conn = DriverManager.getConnection(url); Statement st = conn.createStatement(); ResultSet rs = st.executeQuery("SELECT * FROM barang")) {
 
-            while (rs.next()) {
+while (rs.next()) {
+                // Ambil barcode, jika null jadikan string kosong agar tidak error
+                String dBarcode = rs.getString("barcode") != null ? rs.getString("barcode") : "";
+                
                 model.addRow(new Object[]{
                     rs.getInt("id_barang"),
                     rs.getString("nama_barang"),
-                    rs.getString("kategori"), // Ambil data kategori dari database
+                    dBarcode, // TAMPILKAN BARCODE DI TABEL
+                    rs.getString("kategori"),
                     rs.getInt("harga"),
                     rs.getInt("stok")
                 });
@@ -297,8 +297,9 @@ public class MainFrame extends javax.swing.JFrame {
             }
         };
 
-        model.addColumn("ID Barang");
+model.addColumn("ID Barang");
         model.addColumn("Nama Barang");
+        model.addColumn("Barcode"); // TAMBAHAN KOLOM BARCODE DI TABEL
         model.addColumn("Kategori");
         model.addColumn("Harga");
         model.addColumn("Stok");
@@ -335,10 +336,14 @@ public class MainFrame extends javax.swing.JFrame {
 
             ResultSet rs = pstmt.executeQuery();
 
-            while (rs.next()) {
+while (rs.next()) {
+                // Ambil barcode, jika null jadikan string kosong agar tidak error
+                String dBarcode = rs.getString("barcode") != null ? rs.getString("barcode") : "";
+                
                 model.addRow(new Object[]{
                     rs.getInt("id_barang"),
                     rs.getString("nama_barang"),
+                    dBarcode, // TAMPILKAN BARCODE DI TABEL
                     rs.getString("kategori"),
                     rs.getInt("harga"),
                     rs.getInt("stok")
@@ -372,12 +377,23 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }
 
+    private void resetForm() {
+        txtNama.setText("");
+        txtHarga.setText("");
+        txtStok.setText("");
+        txtBarcodeBarang.setText(""); // KOSONGKAN BARCODE
+        cbKategori.setSelectedIndex(0);
+        idBarangTerpilih = "";
+    }
+    
+    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         PanelUtama = new toko.aplikasipos.CustomRoundedPanel();
         jLabel7 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
         PanelCenter = new toko.aplikasipos.CustomRoundedPanel();
         panelInputBarang = new toko.aplikasipos.CustomRoundedPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -395,6 +411,7 @@ public class MainFrame extends javax.swing.JFrame {
         btnSimpan = new javax.swing.JButton();
         btnEdit = new javax.swing.JButton();
         btnHapus = new javax.swing.JButton();
+        txtBarcodeBarang = new javax.swing.JTextField();
         CariBarang = new toko.aplikasipos.CustomRoundedPanel();
         txtCari = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
@@ -429,12 +446,16 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel7.setText("sanFK POS");
         jLabel7.setToolTipText("Close");
         jLabel7.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        jLabel7.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jLabel7.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
         jLabel7.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 jLabel7MouseClicked(evt);
             }
         });
+
+        jLabel8.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        jLabel8.setForeground(new java.awt.Color(204, 204, 204));
+        jLabel8.setText("Admin");
 
         PanelCenter.setBottomLeftRound(false);
         PanelCenter.setBottomRightRound(false);
@@ -483,8 +504,9 @@ public class MainFrame extends javax.swing.JFrame {
         panelSEH.setLayout(new java.awt.GridLayout(4, 0, 5, 5));
 
         btnHapusKategori.setFont(new java.awt.Font("Segoe UI Semibold", 0, 12)); // NOI18N
-        btnHapusKategori.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/delete.png"))); // NOI18N
         btnHapusKategori.setText("Hapus Kategori");
+        btnHapusKategori.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        btnHapusKategori.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
         btnHapusKategori.addActionListener(this::btnHapusKategoriActionPerformed);
         panelSEH.add(btnHapusKategori);
 
@@ -494,33 +516,27 @@ public class MainFrame extends javax.swing.JFrame {
         panelSEH.add(cbKategori);
 
         btnTambahKategori.setFont(new java.awt.Font("Segoe UI Semibold", 0, 12)); // NOI18N
-        btnTambahKategori.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/plus.png"))); // NOI18N
         btnTambahKategori.setText("Tambah Kategori");
+        btnTambahKategori.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         btnTambahKategori.addActionListener(this::btnTambahKategoriActionPerformed);
         panelSEH.add(btnTambahKategori);
 
         jLabel1.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setText("Nama Barang");
-        jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jLabel1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jLabel1.setPreferredSize(new java.awt.Dimension(50, 30));
         panelSEH.add(jLabel1);
 
         jLabel2.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setText("Harga");
-        jLabel2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jLabel2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         panelSEH.add(jLabel2);
 
         jLabel3.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel3.setText("Stok");
-        jLabel3.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jLabel3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         panelSEH.add(jLabel3);
 
@@ -535,24 +551,22 @@ public class MainFrame extends javax.swing.JFrame {
 
         btnSimpan.setBackground(new java.awt.Color(46, 213, 115));
         btnSimpan.setFont(new java.awt.Font("Segoe UI Semibold", 0, 18)); // NOI18N
-        btnSimpan.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/data.png"))); // NOI18N
         btnSimpan.setText("Simpan");
         btnSimpan.addActionListener(this::btnSimpanActionPerformed);
         panelSEH.add(btnSimpan);
 
         btnEdit.setBackground(new java.awt.Color(30, 144, 255));
         btnEdit.setFont(new java.awt.Font("Segoe UI Semibold", 0, 18)); // NOI18N
-        btnEdit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/edit.png"))); // NOI18N
         btnEdit.setText("Edit");
         btnEdit.addActionListener(this::btnEditActionPerformed);
         panelSEH.add(btnEdit);
 
         btnHapus.setBackground(new java.awt.Color(255, 165, 2));
         btnHapus.setFont(new java.awt.Font("Segoe UI Semibold", 0, 18)); // NOI18N
-        btnHapus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/hapus.png"))); // NOI18N
         btnHapus.setText("Hapus");
         btnHapus.addActionListener(this::btnHapusActionPerformed);
         panelSEH.add(btnHapus);
+        panelSEH.add(txtBarcodeBarang);
 
         CariBarang.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         CariBarang.setBottomLeftRound(false);
@@ -570,15 +584,13 @@ public class MainFrame extends javax.swing.JFrame {
 
         jLabel4.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         jLabel4.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/search.png"))); // NOI18N
+        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel4.setText("Cari Barang");
 
         jLabel5.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         jLabel5.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/filter.png"))); // NOI18N
-        jLabel5.setText("Filter Kategori");
+        jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        jLabel5.setText("Filter");
 
         cbFilterKategori.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cbFilterKategori.addActionListener(this::cbFilterKategoriActionPerformed);
@@ -605,7 +617,7 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(CariBarangLayout.createSequentialGroup()
                 .addGap(6, 6, 6)
                 .addGroup(CariBarangLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 22, Short.MAX_VALUE)
+                    .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(CariBarangLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -670,30 +682,23 @@ public class MainFrame extends javax.swing.JFrame {
 
         lblUsername.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         lblUsername.setForeground(new java.awt.Color(255, 255, 255));
-        lblUsername.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblUsername.setText("Username");
-        lblUsername.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         lblUsername.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         panelAkun.add(lblUsername);
 
         lblPassword.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         lblPassword.setForeground(new java.awt.Color(255, 255, 255));
-        lblPassword.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblPassword.setText("Password");
-        lblPassword.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         lblPassword.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         panelAkun.add(lblPassword);
 
         jLabel6.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         jLabel6.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel6.setText("Role");
-        jLabel6.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jLabel6.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         panelAkun.add(jLabel6);
 
         btnLaporan.setBackground(new java.awt.Color(204, 255, 255));
-        btnLaporan.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/laporan.png"))); // NOI18N
         btnLaporan.setText("Laporan");
         btnLaporan.addActionListener(this::btnLaporanActionPerformed);
         panelAkun.add(btnLaporan);
@@ -708,7 +713,6 @@ public class MainFrame extends javax.swing.JFrame {
         panelAkun.add(cbRoleUser);
 
         lblMenuKasir.setBackground(new java.awt.Color(68, 189, 50));
-        lblMenuKasir.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/user.png"))); // NOI18N
         lblMenuKasir.setText("Kasir");
         lblMenuKasir.addActionListener(this::lblMenuKasirActionPerformed);
         panelAkun.add(lblMenuKasir);
@@ -739,7 +743,7 @@ public class MainFrame extends javax.swing.JFrame {
             panelAkunUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelAkunUserLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(panelAkun, javax.swing.GroupLayout.PREFERRED_SIZE, 117, Short.MAX_VALUE)
+                .addComponent(panelAkun, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 414, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(7, 7, 7))
@@ -751,7 +755,7 @@ public class MainFrame extends javax.swing.JFrame {
             PanelCenterLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, PanelCenterLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(panelInputBarang, javax.swing.GroupLayout.DEFAULT_SIZE, 747, Short.MAX_VALUE)
+                .addComponent(panelInputBarang, javax.swing.GroupLayout.DEFAULT_SIZE, 756, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(panelAkunUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -773,7 +777,6 @@ public class MainFrame extends javax.swing.JFrame {
         lblLinkSosmed.setFont(new java.awt.Font("Times New Roman", 1, 12)); // NOI18N
         lblLinkSosmed.setForeground(new java.awt.Color(204, 204, 204));
         lblLinkSosmed.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblLinkSosmed.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/fb.png"))); // NOI18N
         lblLinkSosmed.setText("sanFk POS");
         lblLinkSosmed.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblLinkSosmed.setIconTextGap(10);
@@ -790,7 +793,9 @@ public class MainFrame extends javax.swing.JFrame {
             PanelUtamaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(PanelLink, javax.swing.GroupLayout.DEFAULT_SIZE, 1254, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, PanelUtamaLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(25, 25, 25)
+                .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel7)
                 .addGap(14, 14, 14))
             .addGroup(PanelUtamaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -800,8 +805,10 @@ public class MainFrame extends javax.swing.JFrame {
             PanelUtamaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, PanelUtamaLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel7)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 610, Short.MAX_VALUE)
+                .addGroup(PanelUtamaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel7)
+                    .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 623, Short.MAX_VALUE)
                 .addComponent(PanelLink, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addGroup(PanelUtamaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(PanelUtamaLayout.createSequentialGroup()
@@ -826,13 +833,14 @@ public class MainFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnSimpanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanActionPerformed
-        String nama = txtNama.getText().trim();
+String nama = txtNama.getText().trim();
         String hargaStr = txtHarga.getText().trim();
         String stokStr = txtStok.getText().trim();
+        String barcode = txtBarcodeBarang.getText().trim(); // AMBIL TEKS BARCODE
         Object kategoriObj = cbKategori.getSelectedItem();
 
         if (nama.isEmpty() || hargaStr.isEmpty() || stokStr.isEmpty() || kategoriObj == null) {
-            JOptionPane.showMessageDialog(this, "Semua field wajib diisi!");
+            JOptionPane.showMessageDialog(this, "Semua field (kecuali barcode) wajib diisi!");
             return;
         }
 
@@ -844,7 +852,7 @@ public class MainFrame extends javax.swing.JFrame {
             validateNonNegative(stok, "Stok");
             String kategori = kategoriObj.toString();
 
-            // CEK DUPLIKAT
+            // CEK DUPLIKAT NAMA
             String cekSql = "SELECT 1 FROM barang WHERE nama_barang = ?";
             try (PreparedStatement cek = conn.prepareStatement(cekSql)) {
                 cek.setString(1, nama);
@@ -853,14 +861,27 @@ public class MainFrame extends javax.swing.JFrame {
                     return;
                 }
             }
+            
+            // CEK DUPLIKAT BARCODE (Opsional tapi penting agar scanner tidak bingung)
+            if (!barcode.isEmpty()) {
+                String cekBc = "SELECT 1 FROM barang WHERE barcode = ?";
+                try (PreparedStatement cekB = conn.prepareStatement(cekBc)) {
+                    cekB.setString(1, barcode);
+                    if (cekB.executeQuery().next()) {
+                        JOptionPane.showMessageDialog(this, "Barcode ini sudah dipakai oleh barang lain!");
+                        return;
+                    }
+                }
+            }
 
-            // INSERT
-            String sql = "INSERT INTO barang (nama_barang, kategori, harga, stok) VALUES (?, ?, ?, ?)";
+            // INSERT DENGAN BARCODE
+            String sql = "INSERT INTO barang (nama_barang, kategori, harga, stok, barcode) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, nama);
                 ps.setString(2, kategori);
                 ps.setInt(3, harga);
                 ps.setInt(4, stok);
+                ps.setString(5, barcode); // MASUKKAN BARCODE KE PARAMETER 5
                 ps.executeUpdate();
             }
 
@@ -869,36 +890,40 @@ public class MainFrame extends javax.swing.JFrame {
             resetForm();
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, e.getMessage());
+            JOptionPane.showMessageDialog(this, "Error Simpan: " + e.getMessage());
         }
     }//GEN-LAST:event_btnSimpanActionPerformed
 
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
-        int baris = jTable1.rowAtPoint(evt.getPoint());
+int baris = jTable1.rowAtPoint(evt.getPoint());
 
         if (baris > -1) {
-            // Indeks kolom bergeser karena ada tambahan kategori
+            // Indeks bergeser karena ada kolom barcode (indeks ke-2)
             idBarangTerpilih = jTable1.getValueAt(baris, 0).toString();
             String nama = jTable1.getValueAt(baris, 1).toString();
-            String kategori = jTable1.getValueAt(baris, 2).toString(); // Ambil kategori
-            String harga = jTable1.getValueAt(baris, 3).toString();
-            String stok = jTable1.getValueAt(baris, 4).toString();
+            String barcode = jTable1.getValueAt(baris, 2).toString(); // AMBIL DARI TABEL
+            String kategori = jTable1.getValueAt(baris, 3).toString(); 
+            String harga = jTable1.getValueAt(baris, 4).toString();
+            String stok = jTable1.getValueAt(baris, 5).toString();
 
             txtNama.setText(nama);
-            cbKategori.setSelectedItem(kategori); // Ubah pilihan ComboBox
+            txtBarcodeBarang.setText(barcode); // MASUKKAN KE KOTAK TEKS
+            cbKategori.setSelectedItem(kategori); 
             txtHarga.setText(harga);
             txtStok.setText(stok);
         }
     }//GEN-LAST:event_jTable1MouseClicked
 
     private void btnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditActionPerformed
-        if (idBarangTerpilih.isEmpty()) {
+  if (idBarangTerpilih.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Pilih data dulu!");
             return;
         }
 
         try (Connection conn = getConnection()) {
             String nama = txtNama.getText().trim();
+            String barcode = txtBarcodeBarang.getText().trim(); // AMBIL BARCODE UNTUK DIEDIT
+            
             if (nama.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Nama barang wajib diisi!");
                 return;
@@ -916,13 +941,15 @@ public class MainFrame extends javax.swing.JFrame {
             validateNonNegative(stok, "Stok");
             String kategori = kategoriObj.toString();
 
-            String sql = "UPDATE barang SET nama_barang=?, kategori=?, harga=?, stok=? WHERE id_barang=?";
+            // UPDATE DENGAN BARCODE
+            String sql = "UPDATE barang SET nama_barang=?, kategori=?, harga=?, stok=?, barcode=? WHERE id_barang=?";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, nama);
                 ps.setString(2, kategori);
                 ps.setInt(3, harga);
                 ps.setInt(4, stok);
-                ps.setString(5, idBarangTerpilih);
+                ps.setString(5, barcode); // SET BARCODE BARU
+                ps.setString(6, idBarangTerpilih);
                 ps.executeUpdate();
             }
 
@@ -931,7 +958,7 @@ public class MainFrame extends javax.swing.JFrame {
             resetForm();
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, e.getMessage());
+            JOptionPane.showMessageDialog(this, "Error Edit: " + e.getMessage());
         }
     }//GEN-LAST:event_btnEditActionPerformed
 
@@ -1079,7 +1106,7 @@ public class MainFrame extends javax.swing.JFrame {
             formKasirAktif.setVisible(true);
 
             // (OPSIONAL) Jika Anda ingin MainFrame tertutup saat Kasir terbuka, hapus garis miring di bawah ini:
-            this.dispose(); 
+            this.dispose();
         } else {
             // JIKA SUDAH TERBUKA: Jangan buka baru, cukup tarik jendela yang lama ke depan layar
             formKasirAktif.toFront();
@@ -1089,11 +1116,6 @@ public class MainFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Menu Kasir sudah terbuka!", "Informasi", JOptionPane.INFORMATION_MESSAGE);
         }
     }//GEN-LAST:event_lblMenuKasirActionPerformed
-
-
-
-
-
 
     private void btnSimpanUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanUserActionPerformed
         String username = txtUsernameUser.getText().trim().toLowerCase();
@@ -1192,7 +1214,7 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnLaporanActionPerformed
 
     private void jLabel7MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel7MouseClicked
-       System.exit(0);
+        System.exit(0);
     }//GEN-LAST:event_jLabel7MouseClicked
 
     private void openWorkspace(String tabName) {
@@ -1209,11 +1231,7 @@ public class MainFrame extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
+
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -1253,6 +1271,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable jTable1;
@@ -1265,6 +1284,7 @@ public class MainFrame extends javax.swing.JFrame {
     private toko.aplikasipos.CustomRoundedPanel panelInputBarang;
     private toko.aplikasipos.CustomRoundedPanel panelSEH;
     private javax.swing.JTable tblUser;
+    private javax.swing.JTextField txtBarcodeBarang;
     private javax.swing.JTextField txtCari;
     private javax.swing.JTextField txtHarga;
     private javax.swing.JTextField txtNama;
