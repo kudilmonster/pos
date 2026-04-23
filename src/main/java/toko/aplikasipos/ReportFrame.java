@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.LocalDate;
@@ -38,7 +37,6 @@ import javax.swing.table.DefaultTableModel;
 
 public class ReportFrame extends JFrame {
 
-    private static final String DB_URL = "jdbc:sqlite:pos_db.db";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final NumberFormat IDR_FORMAT = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID"));
 
@@ -176,7 +174,7 @@ public class ReportFrame extends JFrame {
         chartQtyValues.clear();
         chartOmzetValues.clear();
         chartValues.clear();
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+        try (Connection conn = DatabaseManager.getConnection()) {
             try (PreparedStatement ps = conn.prepareStatement(sqlSummary)) {
                 ps.setString(1, awal.toString());
                 ps.setString(2, akhir.toString());
@@ -401,3 +399,4 @@ public class ReportFrame extends JFrame {
         return "Rp " + IDR_FORMAT.format(value);
     }
 }
+

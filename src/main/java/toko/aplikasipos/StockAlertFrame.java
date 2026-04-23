@@ -3,7 +3,6 @@ package toko.aplikasipos;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -19,7 +18,6 @@ import javax.swing.table.DefaultTableModel;
 
 public class StockAlertFrame extends JFrame {
 
-    private static final String DB_URL = "jdbc:sqlite:pos_db.db";
     
     // 1. TAMBAH KOLOM JUAL DAN MARGIN
     private final DefaultTableModel model = new DefaultTableModel(
@@ -76,7 +74,7 @@ public class StockAlertFrame extends JFrame {
                 ORDER BY (stok <= COALESCE(stok_minimum, 5)) DESC, nama_barang ASC
                 """;
                 
-        try (Connection conn = DriverManager.getConnection(DB_URL);
+        try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
              
@@ -87,7 +85,7 @@ public class StockAlertFrame extends JFrame {
                 int stok = rs.getInt("stok");
                 int min = rs.getInt("min");
                 
-                String status = stok <= min ? "⚠️ RE-STOCK" : "✅ AMAN";
+                String status = stok <= min ? "RE-STOCK" : "AMAN";
                 
                 model.addRow(new Object[]{
                     rs.getInt("id_barang"),
@@ -118,7 +116,7 @@ public class StockAlertFrame extends JFrame {
             int minBaru = Integer.parseInt(txtMin.getText().trim());
             int idBarang = (int) model.getValueAt(row, 0);
             
-            try (Connection conn = DriverManager.getConnection(DB_URL);
+            try (Connection conn = DatabaseManager.getConnection();
                  PreparedStatement ps = conn.prepareStatement("UPDATE barang SET stok_minimum = ? WHERE id_barang = ?")) {
                 ps.setInt(1, minBaru);
                 ps.setInt(2, idBarang);

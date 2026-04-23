@@ -3,7 +3,6 @@ package toko.aplikasipos;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -21,7 +20,6 @@ import javax.swing.table.DefaultTableModel;
 
 public class SupplierPurchaseFrame extends JFrame {
 
-    private static final String DB_URL = "jdbc:sqlite:pos_db.db";
 
     private final JTextField txtNamaSupplier = new JTextField(12);
     private final JTextField txtKontak = new JTextField(10);
@@ -60,7 +58,7 @@ public class SupplierPurchaseFrame extends JFrame {
     
     // --- FITUR BARU: AUTO-PATCH DATABASE ---
     private void pastikanTabelAman() {
-        try (Connection conn = DriverManager.getConnection(DB_URL);
+        try (Connection conn = DatabaseManager.getConnection();
              Statement st = conn.createStatement()) {
             
             // A. Pastikan tabel supplier ada
@@ -133,7 +131,7 @@ public class SupplierPurchaseFrame extends JFrame {
         modelSupplier.setRowCount(0);
         cbSupplier.removeAllItems();
         String sql = "SELECT id_supplier, nama_supplier, COALESCE(kontak,''), COALESCE(alamat,'') FROM supplier ORDER BY nama_supplier";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
+        try (Connection conn = DatabaseManager.getConnection();
              Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
@@ -150,7 +148,7 @@ public class SupplierPurchaseFrame extends JFrame {
     private void loadBarang() {
         cbBarang.removeAllItems();
         String sql = "SELECT nama_barang FROM barang ORDER BY nama_barang";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
+        try (Connection conn = DatabaseManager.getConnection();
              Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
@@ -169,7 +167,7 @@ private void simpanSupplier() {
         }
         
         String sql = "INSERT INTO supplier (nama_supplier, kontak, alamat) VALUES (?, ?, ?)";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
+        try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
              
             ps.setString(1, nama);
@@ -219,7 +217,7 @@ private void simpanSupplier() {
             return;
         }
 
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+        try (Connection conn = DatabaseManager.getConnection()) {
             int qty = parseInt(txtQty.getText(), "Qty");
             int hargaBeli = parseInt(txtHargaBeli.getText(), "Harga Beli");
             int subtotal = qty * hargaBeli;

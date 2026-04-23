@@ -2,7 +2,6 @@ package toko.aplikasipos;
 
 import java.awt.Color;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -21,10 +20,11 @@ public class LoginFrame extends javax.swing.JFrame {
 
     public LoginFrame() {
         initComponents();
+        AppUtil.setLabelIcon(jLabel5, "/icon/logofk32.png");
         this.setLocationRelativeTo(null); // (Opsional) Agar form di tengah layar
         setBackground(new Color(0, 0, 0, 0));
         AppUtil.setWindowIcon(this);
-        this.setLocationRelativeTo(null);
+      
     }
 
     @SuppressWarnings("unchecked")
@@ -73,7 +73,7 @@ public class LoginFrame extends javax.swing.JFrame {
         jLabel4.setForeground(new java.awt.Color(204, 204, 204));
         jLabel4.setText("sanFK POS");
 
-        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/logofk32.png"))); // NOI18N
+        AppUtil.setLabelIcon(jLabel5, "/icon/logofk32.png");
 
         javax.swing.GroupLayout customRoundedPanel1Layout = new javax.swing.GroupLayout(customRoundedPanel1);
         customRoundedPanel1.setLayout(customRoundedPanel1Layout);
@@ -149,7 +149,6 @@ public class LoginFrame extends javax.swing.JFrame {
             return;
         }
 
-        String url = "jdbc:sqlite:pos_db.db";
         String sql = "SELECT id_user, username, password, role FROM users WHERE username = ?";
 
         boolean isLoginSukses = false;
@@ -157,7 +156,7 @@ public class LoginFrame extends javax.swing.JFrame {
         int idUser = -1;
         String storedPassword = null;
 
-        try (Connection conn = DriverManager.getConnection(url); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseManager.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, username);
 
@@ -200,8 +199,8 @@ public class LoginFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Selamat Datang, " + kasirAktif + "!\nLogin sebagai: " + roleAkun);
 
             if (roleAkun.equalsIgnoreCase("Admin")) {
-                MainFrame utama = new MainFrame();
-                utama.setVisible(true);
+                AdminWorkspaceFrame dashboardAdmin = new AdminWorkspaceFrame();
+                dashboardAdmin.setVisible(true);
             } else {
                 KasirFrame kasir = new KasirFrame();
                 kasir.setVisible(true);
@@ -265,9 +264,8 @@ public class LoginFrame extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 boolean tokoSudahSetup = false;
-                String url = "jdbc:sqlite:pos_db.db";
 
-                try (java.sql.Connection conn = java.sql.DriverManager.getConnection(url)) {
+                try (java.sql.Connection conn = toko.aplikasipos.DatabaseManager.getConnection()) {
 
                     // CARA LEBIH AMAN: Gunakan MetaData bawaan Java untuk mengecek keberadaan tabel
                     java.sql.DatabaseMetaData dbm = conn.getMetaData();
@@ -313,3 +311,4 @@ public class LoginFrame extends javax.swing.JFrame {
     private javax.swing.JTextField txtUsername;
     // End of variables declaration//GEN-END:variables
 }
+

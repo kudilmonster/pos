@@ -2,6 +2,7 @@ package toko.aplikasipos;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
 public class AdminWorkspaceFrame extends javax.swing.JFrame {
@@ -9,10 +10,16 @@ public class AdminWorkspaceFrame extends javax.swing.JFrame {
     private final JTabbedPane tabs = new JTabbedPane();
 
     public AdminWorkspaceFrame() {
-        setTitle("Admin Workspace");
+        this(true);
+    }
+
+    public AdminWorkspaceFrame(boolean primaryDashboard) {
+        setTitle("Dashboard Admin");
         setSize(new Dimension(1100, 700));
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(primaryDashboard ? EXIT_ON_CLOSE : DISPOSE_ON_CLOSE);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        AppUtil.setWindowIcon(this);
         initUi();
     }
 
@@ -20,6 +27,7 @@ public class AdminWorkspaceFrame extends javax.swing.JFrame {
         setLayout(new BorderLayout());
         add(tabs, BorderLayout.CENTER);
 
+        tabs.addTab("Input Data", wrapFrame(new MainFrame(this)));
         tabs.addTab("Laporan", wrapFrame(new ReportFrame()));
         tabs.addTab("Riwayat/Void", wrapFrame(new TransactionHistoryFrame()));
         tabs.addTab("Pembelian", wrapFrame(new SupplierPurchaseFrame()));
@@ -44,3 +52,4 @@ public class AdminWorkspaceFrame extends javax.swing.JFrame {
         }
     }
 }
+

@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -22,7 +21,6 @@ import javax.swing.table.DefaultTableModel;
 
 public class TransactionHistoryFrame extends JFrame {
 
-    private static final String DB_URL = "jdbc:sqlite:pos_db.db";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
 
     private final JTextField txtAwal = new JTextField(10);
@@ -116,7 +114,7 @@ public class TransactionHistoryFrame extends JFrame {
                 WHERE DATE(tanggal) BETWEEN ? AND ?
                 ORDER BY id_transaksi DESC
                 """;
-        try (Connection conn = DriverManager.getConnection(DB_URL);
+        try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, awal.toString());
             ps.setString(2, akhir.toString());
@@ -145,7 +143,7 @@ public class TransactionHistoryFrame extends JFrame {
         }
         int idTransaksi = Integer.parseInt(String.valueOf(modelTransaksi.getValueAt(row, 0)));
         String sql = "SELECT id_detail, nama_barang, harga, qty, subtotal FROM detail_transaksi WHERE id_transaksi = ?";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
+        try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idTransaksi);
             try (ResultSet rs = ps.executeQuery()) {
@@ -182,7 +180,7 @@ public class TransactionHistoryFrame extends JFrame {
         }
 
         String sql = "SELECT password FROM users WHERE username = ? AND role = 'Admin'";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
+        try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, txtUser.getText().trim());
             try (ResultSet rs = ps.executeQuery()) {
@@ -219,7 +217,7 @@ public class TransactionHistoryFrame extends JFrame {
             return;
         }
 
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+        try (Connection conn = DatabaseManager.getConnection()) {
             conn.setAutoCommit(false);
             try {
                 String sqlDetail = "SELECT nama_barang, qty, harga, subtotal FROM detail_transaksi WHERE id_transaksi = ?";
@@ -330,7 +328,7 @@ public class TransactionHistoryFrame extends JFrame {
         }
 
         int subtotalRetur = harga * qtyRetur;
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+        try (Connection conn = DatabaseManager.getConnection()) {
             conn.setAutoCommit(false);
             try {
                 int qtySisa = qtyAsli - qtyRetur;
@@ -413,3 +411,4 @@ public class TransactionHistoryFrame extends JFrame {
         loadTransaksi();
     }
 }
+

@@ -2,7 +2,6 @@ package toko.aplikasipos;
 
 import java.awt.Color;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import javax.swing.JOptionPane;
@@ -14,6 +13,7 @@ public class SetupTokoFrame extends javax.swing.JFrame {
 
     public SetupTokoFrame() {
         initComponents();
+        AppUtil.setLabelIcon(jLabel7, "/icon/logofk32.png");
         this.setLocationRelativeTo(null); // (Opsional) Agar form di tengah layar
         setBackground(new Color(0, 0, 0, 0));
         AppUtil.setWindowIcon(this); 
@@ -89,7 +89,7 @@ public class SetupTokoFrame extends javax.swing.JFrame {
         jLabel6.setText("sanFK POS");
         jLabel6.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
 
-        jLabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/logofk32.png"))); // NOI18N
+        AppUtil.setLabelIcon(jLabel7, "/icon/logofk32.png");
 
         javax.swing.GroupLayout customRoundedPanel1Layout = new javax.swing.GroupLayout(customRoundedPanel1);
         customRoundedPanel1.setLayout(customRoundedPanel1Layout);
@@ -174,9 +174,8 @@ public class SetupTokoFrame extends javax.swing.JFrame {
             return;
         }
 
-        String url = "jdbc:sqlite:pos_db.db";
 
-        try (Connection conn = DriverManager.getConnection(url); Statement stmt = conn.createStatement()) {
+        try (Connection conn = DatabaseManager.getConnection(); Statement stmt = conn.createStatement()) {
 
             // 1. Buat tabel profil_toko dan simpan data toko
             stmt.execute("CREATE TABLE IF NOT EXISTS profil_toko (id INTEGER PRIMARY KEY, nama_toko TEXT, alamat TEXT)");
@@ -231,3 +230,4 @@ public class SetupTokoFrame extends javax.swing.JFrame {
     private javax.swing.JPasswordField txtPassword;
     // End of variables declaration//GEN-END:variables
 }
+
