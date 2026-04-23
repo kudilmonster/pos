@@ -5,6 +5,7 @@ import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import java.awt.Color;
 import java.awt.Window;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import javax.swing.table.DefaultTableModel;
@@ -15,7 +16,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 public class MainFrame extends javax.swing.JFrame {
-
+private DefaultTableModel modelKeranjang;
     private Connection getConnection() throws Exception {
         return DatabaseManager.getConnection();
     }
@@ -57,7 +58,7 @@ public class MainFrame extends javax.swing.JFrame {
         tampilkanData();   // Menampilkan data di tabel
         initIcons();
         requestBarcodeFocus();
-        //setBackground(new Color(0, 0, 0, 0));
+
 
     }
 
@@ -266,6 +267,120 @@ public class MainFrame extends javax.swing.JFrame {
         SwingUtilities.invokeLater(() -> txtBarcodeBarang.requestFocusInWindow());
     }
 
+private boolean tambahStokDariBarcode(String barcode, int qtyTambah) {
+    try (Connection conn = DatabaseManager.getConnection()) {
+
+        // 1. Cek dulu apakah barcode sudah ada
+        String cek = "SELECT nama_barang FROM barang WHERE barcode = ?";
+        PreparedStatement pstCek = conn.prepareStatement(cek);
+        pstCek.setString(1, barcode);
+        ResultSet rs = pstCek.executeQuery();
+
+        if (rs.next()) {
+            // ✅ BARANG SUDAH ADA → TAMBAH STOK
+            String update = "UPDATE barang SET stok = stok + ? WHERE barcode = ?";
+            PreparedStatement pstUpdate = conn.prepareStatement(update);
+            pstUpdate.setInt(1, qtyTambah);
+            pstUpdate.setString(2, barcode);
+            pstUpdate.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "Stok berhasil ditambahkan!");
+            return true;
+
+        } else {
+            // ❗ BARANG BELUM ADA → INPUT BARU
+            String nama = JOptionPane.showInputDialog(this, "Nama barang:");
+            if (nama == null || nama.isEmpty()) return false;
+
+            String hargaStr = JOptionPane.showInputDialog(this, "Harga:");
+            int harga = Integer.parseInt(hargaStr);
+
+            Object kategoriObj = cbKategori.getSelectedItem();
+            if (kategoriObj == null) {
+                JOptionPane.showMessageDialog(this, "Pilih kategori dulu!");
+                return false;
+            }
+
+            String kategori = kategoriObj.toString();
+
+            String insert = "INSERT INTO barang (nama_barang, kategori, harga, stok, barcode) VALUES (?, ?, ?, ?, ?)";
+            PreparedStatement pstInsert = conn.prepareStatement(insert);
+            pstInsert.setString(1, nama);
+            pstInsert.setString(2, kategori);
+            pstInsert.setInt(3, harga);
+            pstInsert.setInt(4, qtyTambah);
+            pstInsert.setString(5, barcode);
+            pstInsert.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "Barang baru berhasil ditambahkan!");
+            return true;
+        }
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        return false;
+    }
+}
+    
+    private void cariBarangDariScan(String barcode) {
+    String sql = "SELECT * FROM barang WHERE barcode = ?";
+
+    try (Connection conn = DatabaseManager.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+        pstmt.setString(1, barcode);
+        ResultSet rs = pstmt.executeQuery();
+
+        if (rs.next()) {
+            // ✅ Barang ditemukan → langsung proses
+            prosesScanBarang(rs);
+        } else {
+            JOptionPane.showMessageDialog(this, "Barcode tidak ditemukan!");
+        }
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Error scan: " + e.getMessage());
+    }
+}
+    
+private void prosesScanBarang(ResultSet rs) throws Exception {
+    String nama = rs.getString("nama_barang");
+    int harga = rs.getInt("harga");
+    int stok = rs.getInt("stok");
+
+    if (stok <= 0) {
+        JOptionPane.showMessageDialog(this, "Stok habis!");
+        return;
+    }
+
+    // Pastikan modelKeranjang sudah ada
+    if (modelKeranjang == null) {
+        modelKeranjang = new DefaultTableModel(
+            new Object[]{"Nama", "Harga", "Qty", "Subtotal"}, 0
+        );
+    }
+
+    // Cek apakah barang sudah ada di keranjang
+    for (int i = 0; i < modelKeranjang.getRowCount(); i++) {
+        if (modelKeranjang.getValueAt(i, 0).equals(nama)) {
+
+            int qty = Integer.parseInt(modelKeranjang.getValueAt(i, 2).toString()) + 1;
+            int subtotal = qty * harga;
+
+            modelKeranjang.setValueAt(qty, i, 2);
+            modelKeranjang.setValueAt(subtotal, i, 3);
+
+            return;
+        }
+    }
+
+    // Kalau belum ada → tambah baru
+    modelKeranjang.addRow(new Object[]{
+        nama, harga, 1, harga
+    });
+}
+    
+    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -290,6 +405,7 @@ public class MainFrame extends javax.swing.JFrame {
         txtStok = new javax.swing.JTextField();
         btnSimpan = new javax.swing.JButton();
         txtBarcodeBarang = new javax.swing.JTextField();
+        btnScanTambahStokA = new javax.swing.JButton();
         CariBarang = new toko.aplikasipos.CustomRoundedPanel();
         txtCari = new javax.swing.JTextField();
         cari = new javax.swing.JLabel();
@@ -433,6 +549,10 @@ public class MainFrame extends javax.swing.JFrame {
         btnSimpan.addActionListener(this::btnSimpanActionPerformed);
         panelSEH.add(btnSimpan);
         panelSEH.add(txtBarcodeBarang);
+
+        btnScanTambahStokA.setText("Scan Tambah Stok");
+        btnScanTambahStokA.addActionListener(this::btnScanTambahStokAActionPerformed);
+        panelSEH.add(btnScanTambahStokA);
 
         CariBarang.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         CariBarang.setBottomLeftRound(false);
@@ -1082,6 +1202,42 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_lblLinkSosmedMouseClicked
 
+    private void btnScanTambahStokAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScanTambahStokAActionPerformed
+    KameraScanner scanner = new KameraScanner(this);
+    scanner.setVisible(true);
+
+    String barcode = scanner.getHasilScan();
+
+    if (barcode == null || barcode.trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Scan dibatalkan atau gagal!");
+        return;
+    }
+
+    // ✅ TAMBAHKAN INI
+
+    txtBarcodeBarang.setText(barcode);
+
+    String input = JOptionPane.showInputDialog(this, "Masukkan jumlah tambah stok:");
+
+    if (input == null) return;
+
+    int qty;
+    try {
+        qty = Integer.parseInt(input);
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Harus angka!");
+        return;
+    }
+
+    boolean sukses = tambahStokDariBarcode(barcode, qty);
+
+    if (sukses) {
+        cariData();
+        resetForm();
+        
+    }
+    }//GEN-LAST:event_btnScanTambahStokAActionPerformed
+
     private void openWorkspace(String tabName) {
         if (hostWorkspace != null && hostWorkspace.isDisplayable()) {
             hostWorkspace.openTab(tabName);
@@ -1099,9 +1255,7 @@ public class MainFrame extends javax.swing.JFrame {
         formWorkspaceAktif.requestFocus();
     }
 
-    /**
-     * @param args the command line arguments
-     */
+
     public static void main(String args[]) {
 
         try {
@@ -1129,6 +1283,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton btnHapus;
     private javax.swing.JButton btnHapusKategori;
     private javax.swing.JButton btnHapusUser;
+    private javax.swing.JButton btnScanTambahStokA;
     private javax.swing.JButton btnSimpan;
     private javax.swing.JButton btnSimpanUser;
     private javax.swing.JButton btnTambahKategori;

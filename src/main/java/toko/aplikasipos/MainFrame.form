@@ -359,6 +359,14 @@
                     </Component>
                     <Component class="javax.swing.JTextField" name="txtBarcodeBarang">
                     </Component>
+                    <Component class="javax.swing.JButton" name="btnScanTambahStokA">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="Scan Tambah Stok"/>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnScanTambahStokAActionPerformed"/>
+                      </Events>
+                    </Component>
                   </SubComponents>
                 </Container>
                 <Container class="toko.aplikasipos.CustomRoundedPanel" name="CariBarang">

@@ -9,15 +9,13 @@ import java.util.logging.Logger;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 
-
 public class KasirFrame extends javax.swing.JFrame {
 
     private static final Logger logger = Logger.getLogger(KasirFrame.class.getName());
     DefaultTableModel modelKeranjang;
     int totalBelanja = 0;
     //private int mouseX, mouseY;
-    
-    
+
     public KasirFrame() {
         initComponents();
 
@@ -32,17 +30,18 @@ public class KasirFrame extends javax.swing.JFrame {
         requestBarcodeFocus();
         initIcon();
         mulaiJam();
+
     }
 
     // ================= INIT =================
     private void initTable() {
         modelKeranjang = new DefaultTableModel(
- new String[]{"Nama Barang", "Barcode", "Harga", "Qty", "Subtotal"}, 0
-    ) {
-        @Override
-        public boolean isCellEditable(int row, int column) {
-            return false; // Agar kasir tidak bisa mengetik manual di tabel
-        }
+                new String[]{"Nama Barang", "Barcode", "Harga", "Qty", "Subtotal"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Agar kasir tidak bisa mengetik manual di tabel
+            }
         };
 
         tblKeranjang.setModel(modelKeranjang);
@@ -53,8 +52,6 @@ public class KasirFrame extends javax.swing.JFrame {
         return DatabaseManager.getConnection();
     }
 
-
-    
     private int toInt(Object value) {
         try {
             return Integer.parseInt(value.toString());
@@ -152,18 +149,17 @@ public class KasirFrame extends javax.swing.JFrame {
             System.out.println("Error barang: " + e.getMessage());
         }
     }
-    
+
     private void prosesScanBarang(String kode) {
         // Tambahkan permintaan kolom 'barcode' ke SQL
         String sql = "SELECT nama_barang, harga, stok, COALESCE(barcode, '') AS barcode FROM barang WHERE barcode = ? OR id_barang = ? OR nama_barang = ?";
-        
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
+        try (Connection conn = DatabaseManager.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setString(1, kode);
-            ps.setString(2, kode); 
+            ps.setString(2, kode);
             ps.setString(3, kode);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     String nama = rs.getString("nama_barang");
@@ -176,36 +172,36 @@ public class KasirFrame extends javax.swing.JFrame {
                         JOptionPane.showMessageDialog(this, "Stok untuk " + nama + " tidak mencukupi.", "Stok Habis", JOptionPane.WARNING_MESSAGE);
                         return;
                     }
-                    
+
                     boolean sudahAda = false;
                     for (int i = 0; i < modelKeranjang.getRowCount(); i++) {
                         String namaDiKeranjang = modelKeranjang.getValueAt(i, 0).toString();
-                        
+
                         if (nama.equals(namaDiKeranjang)) {
                             // PERHATIAN: Indeks Qty sekarang jadi 3, Subtotal jadi 4
                             int qtyLama = Integer.parseInt(modelKeranjang.getValueAt(i, 3).toString());
                             int qtyBaru = qtyLama + 1;
                             int subtotalBaru = harga * qtyBaru;
-                            
+
                             modelKeranjang.setValueAt(qtyBaru, i, 3); // Update Qty
                             modelKeranjang.setValueAt(subtotalBaru, i, 4); // Update Subtotal
                             sudahAda = true;
                             break;
                         }
                     }
-                    
+
                     if (!sudahAda) {
                         // Masukkan baris baru dengan urutan: Nama, Barcode, Harga, Qty, Subtotal
                         modelKeranjang.addRow(new Object[]{nama, barcodeDB, harga, 1, harga});
                     }
-                    
-                    hitungTotal(); 
-                    
+
+                    hitungTotal();
+
                 } else {
                     JOptionPane.showMessageDialog(this, "Barang tidak ditemukan!", "Error", JOptionPane.WARNING_MESSAGE);
                 }
             }
-            
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error pencarian barang: " + e.getMessage());
         }
@@ -392,7 +388,7 @@ public class KasirFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Error PDF: " + e.getMessage());
         }
     }
-    
+
     private void initIcon() {
         AppUtil.setWindowIcon(this);
         AppUtil.setButtonIcon(btnBatalKeranjang, "/icon/shopping_cart_off.png");
@@ -401,25 +397,79 @@ public class KasirFrame extends javax.swing.JFrame {
         AppUtil.setButtonIcon(btnSimpanTransaksi, "/icon/payments.png");
         AppUtil.setLabelIcon(putramas, "/icon/fb.png");
     }
-    
+
     private void mulaiJam() {
         // Format waktu (Contoh hasil: 14:30:05  |  23-04-2026)
         java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss  |  dd-MM-yyyy");
-        
+
         // Timer Swing untuk memperbarui waktu setiap 1000 milidetik (1 detik)
         javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
             // Ambil waktu komputer saat ini
             String waktuSekarang = java.time.LocalDateTime.now().format(formatter);
-            
+
             // Pasang ke JLabel
-            lblJam.setText(waktuSekarang); 
+            lblJam.setText(waktuSekarang);
         });
-        
+
         // Pasang waktu langsung saat aplikasi baru dibuka (agar tidak ada delay kosong 1 detik)
-        lblJam.setText(java.time.LocalDateTime.now().format(formatter)); 
-        
+        lblJam.setText(java.time.LocalDateTime.now().format(formatter));
+
         // Jalankan mesin jamnya!
         timer.start();
+    }
+
+    private void prosesScanBarang(String barcode, int qtyInput) {
+        String sql = "SELECT * FROM barang WHERE barcode = ?";
+
+        try (Connection conn = DatabaseManager.getConnection(); PreparedStatement pst = conn.prepareStatement(sql)) {
+
+            pst.setString(1, barcode);
+            ResultSet rs = pst.executeQuery();
+
+            if (!rs.next()) {
+                JOptionPane.showMessageDialog(this, "Barang tidak ditemukan!");
+                return;
+            }
+
+            String nama = rs.getString("nama_barang");
+            int harga = rs.getInt("harga");
+            int stok = rs.getInt("stok");
+
+            if (stok < qtyInput) {
+                JOptionPane.showMessageDialog(this, "Stok tidak cukup!");
+                return;
+            }
+
+            // 🔁 cek apakah sudah ada di keranjang
+            for (int i = 0; i < modelKeranjang.getRowCount(); i++) {
+                if (modelKeranjang.getValueAt(i, 0).equals(nama)) {
+
+                    int qtyLama = Integer.parseInt(modelKeranjang.getValueAt(i, 2).toString());
+                    int qtyBaru = qtyLama + qtyInput;
+                    int subtotal = qtyBaru * harga;
+
+                    modelKeranjang.setValueAt(qtyBaru, i, 3);      // kolom Qty
+                    modelKeranjang.setValueAt(subtotal, i, 4);     // kolom Subtotal
+
+                    hitungTotal();
+                    return;
+                }
+            }
+
+            // ➕ tambah baru ke keranjang
+            modelKeranjang.addRow(new Object[]{
+                nama,
+                barcode,
+                harga,
+                qtyInput,
+                harga * qtyInput
+            });
+
+            hitungTotal();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -441,6 +491,7 @@ public class KasirFrame extends javax.swing.JFrame {
         lblInfoHarga = new javax.swing.JLabel();
         lblInfoStok = new javax.swing.JLabel();
         btnTambahKeranjang = new javax.swing.JButton();
+        btnScanBarcode = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblKeranjang = new javax.swing.JTable();
         panelBayar = new toko.aplikasipos.CustomRoundedPanel();
@@ -497,7 +548,7 @@ public class KasirFrame extends javax.swing.JFrame {
         panelBarang.setcolorStart(new java.awt.Color(27, 20, 100));
         panelBarang.setTopLeftRound(false);
         panelBarang.setTopRightRound(false);
-        panelBarang.setLayout(new java.awt.GridLayout(3, 0, 10, 10));
+        panelBarang.setLayout(new java.awt.GridLayout(0, 4, 10, 10));
 
         txtKategori.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         txtKategori.setForeground(new java.awt.Color(255, 255, 255));
@@ -573,6 +624,10 @@ public class KasirFrame extends javax.swing.JFrame {
         btnTambahKeranjang.addActionListener(this::btnTambahKeranjangActionPerformed);
         panelBarang.add(btnTambahKeranjang);
 
+        btnScanBarcode.setText("Scan Barcode");
+        btnScanBarcode.addActionListener(this::btnScanBarcodeActionPerformed);
+        panelBarang.add(btnScanBarcode);
+
         tblKeranjang.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         tblKeranjang.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -606,9 +661,9 @@ public class KasirFrame extends javax.swing.JFrame {
             PanelTransaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(PanelTransaksiLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(panelBarang, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(panelBarang, javax.swing.GroupLayout.PREFERRED_SIZE, 178, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 371, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -792,14 +847,14 @@ public class KasirFrame extends javax.swing.JFrame {
             .addGroup(panelBayarLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(PanelProfil, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(354, Short.MAX_VALUE))
+                .addContainerGap(471, Short.MAX_VALUE))
             .addGroup(panelBayarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(panelBayarLayout.createSequentialGroup()
                     .addGap(111, 111, 111)
                     .addGroup(panelBayarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addComponent(PanelDuit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(PanelListBayar, javax.swing.GroupLayout.PREFERRED_SIZE, 237, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addContainerGap(71, Short.MAX_VALUE)))
+                    .addContainerGap(188, Short.MAX_VALUE)))
         );
 
         PanelUtamaTransaksi.add(panelBayar, java.awt.BorderLayout.EAST);
@@ -834,7 +889,7 @@ public class KasirFrame extends javax.swing.JFrame {
         customRoundedPanel1Layout.setHorizontalGroup(
             customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, customRoundedPanel1Layout.createSequentialGroup()
-                .addContainerGap(823, Short.MAX_VALUE)
+                .addContainerGap(834, Short.MAX_VALUE)
                 .addComponent(lblJam, javax.swing.GroupLayout.PREFERRED_SIZE, 280, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
             .addGroup(customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1039,9 +1094,7 @@ public class KasirFrame extends javax.swing.JFrame {
                 String sqlUpdateStok = "UPDATE barang SET stok = stok - ? WHERE nama_barang = ? AND stok >= ?";
                 String sqlModal = "SELECT COALESCE(harga_modal, 0) FROM barang WHERE nama_barang = ?";
 
-                try (PreparedStatement pstDetail = conn.prepareStatement(sqlDetail);
-                     PreparedStatement pstUpdateStok = conn.prepareStatement(sqlUpdateStok);
-                     PreparedStatement pstModal = conn.prepareStatement(sqlModal)) {
+                try (PreparedStatement pstDetail = conn.prepareStatement(sqlDetail); PreparedStatement pstUpdateStok = conn.prepareStatement(sqlUpdateStok); PreparedStatement pstModal = conn.prepareStatement(sqlModal)) {
                     int jumlahBaris = modelKeranjang.getRowCount();
                     for (int i = 0; i < jumlahBaris; i++) {
                         String nama = modelKeranjang.getValueAt(i, 0).toString();
@@ -1159,17 +1212,17 @@ public class KasirFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnBatalKeranjangActionPerformed
 
     private void txtBarcodeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtBarcodeActionPerformed
-       String kodeScan = txtBarcode.getText().trim();
-        
+        String kodeScan = txtBarcode.getText().trim();
+
         if (!kodeScan.isEmpty()) {
             prosesScanBarang(kodeScan); // <--- Di sini fungsi itu dipanggil
-            txtBarcode.setText(""); 
-            txtBarcode.requestFocus(); 
+            txtBarcode.setText("");
+            txtBarcode.requestFocus();
         }
     }//GEN-LAST:event_txtBarcodeActionPerformed
 
     private void putramasMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_putramasMouseClicked
-      // Gunakan fungsi Desktop bawaan Java untuk memanggil Browser komputer
+        // Gunakan fungsi Desktop bawaan Java untuk memanggil Browser komputer
         try {
             // Ganti URL di bawah dengan link sosmed/WhatsApp toko Anda
             String urlSosmed = "https://facebook.com/kudilmonster";
@@ -1185,6 +1238,38 @@ public class KasirFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_putramasMouseClicked
 
+    private void btnScanBarcodeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScanBarcodeActionPerformed
+        KameraScanner dialogKamera = new KameraScanner(this);
+        dialogKamera.setVisible(true);
+
+        String barcode = dialogKamera.getHasilScan();
+
+        if (barcode == null || barcode.trim().isEmpty()) {
+            return;
+        }
+
+        // input qty
+        String input = JOptionPane.showInputDialog(this, "Masukkan Qty:");
+        if (input == null) {
+            return;
+        }
+
+        int qty;
+        try {
+            qty = Integer.parseInt(input);
+            if (qty <= 0) {
+                JOptionPane.showMessageDialog(this, "Qty harus > 0!");
+                return;
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Qty harus angka!");
+            return;
+        }
+
+        // ✅ pakai barcode, bukan hasil
+        prosesScanBarang(barcode, qty);
+    }//GEN-LAST:event_btnScanBarcodeActionPerformed
+
     public static void main(String args[]) {
 
         try {
@@ -1197,8 +1282,7 @@ public class KasirFrame extends javax.swing.JFrame {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        //</editor-fold>
-
+        System.setProperty("java.awt.headless", "false");
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> new KasirFrame().setVisible(true));
     }
@@ -1212,6 +1296,7 @@ public class KasirFrame extends javax.swing.JFrame {
     private javax.swing.JLabel Qty;
     private javax.swing.JButton btnBatalKeranjang;
     private javax.swing.JButton btnHapusItem;
+    private javax.swing.JButton btnScanBarcode;
     private javax.swing.JButton btnSimpanTransaksi;
     private javax.swing.JButton btnTambahKeranjang;
     private javax.swing.JComboBox<String> cbJenisBayar;
@@ -1247,4 +1332,3 @@ public class KasirFrame extends javax.swing.JFrame {
     private javax.swing.JLabel txtTotal;
     // End of variables declaration//GEN-END:variables
 }
-
