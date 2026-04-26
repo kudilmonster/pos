@@ -1,6 +1,7 @@
 package toko.aplikasipos;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.sql.Connection;
@@ -56,6 +57,7 @@ public class TransactionHistoryFrame extends JFrame {
 
     private void initUi() {
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        top.setBackground(new Color(39, 60, 117));
         JButton btnMuat = new JButton("Muat");
         JButton btnVoid = new JButton("Void Transaksi");
         JButton btnRetur = new JButton("Retur Item");
@@ -69,6 +71,7 @@ public class TransactionHistoryFrame extends JFrame {
         top.add(btnRetur);
 
         JPanel center = new JPanel(new GridLayout(2, 1, 8, 8));
+        center.setBackground(new Color(39, 60, 117));
         center.add(new JScrollPane(tblTransaksi));
         center.add(new JScrollPane(tblDetail));
 
@@ -163,12 +166,13 @@ public class TransactionHistoryFrame extends JFrame {
     }
 
     private boolean authorizeAdminAction() {
-        if ("Admin".equalsIgnoreCase(LoginFrame.roleAktif)) {
+        if ("Admin".equalsIgnoreCase(LoginFrame.getRoleAktif())) {
             return true;
         }
-
+        
         JTextField txtUser = new JTextField();
-        JTextField txtPass = new JTextField();
+        // FIX BUG #3: Ganti JTextField → JPasswordField agar password tidak terlihat
+        javax.swing.JPasswordField txtPass = new javax.swing.JPasswordField();
         Object[] form = {
             "Aksi ini butuh otorisasi Admin.",
             "Username Admin:", txtUser,
@@ -178,14 +182,15 @@ public class TransactionHistoryFrame extends JFrame {
         if (ok != JOptionPane.OK_OPTION) {
             return false;
         }
-
+        
         String sql = "SELECT password FROM users WHERE username = ? AND role = 'Admin'";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, txtUser.getText().trim());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return PasswordUtil.verify(txtPass.getText(), rs.getString("password"));
+                    // Gunakan getPassword() agar tidak membuat String di memori terlalu lama
+                    return PasswordUtil.verify(new String(txtPass.getPassword()), rs.getString("password"));
                 }
             }
         } catch (Exception e) {
@@ -240,28 +245,28 @@ public class TransactionHistoryFrame extends JFrame {
                     }
                 }
 
-                try (PreparedStatement up = conn.prepareStatement(
-                        "UPDATE transaksi SET total_harga = 0, status_transaksi = 'VOID', catatan_status = ?, updated_by = ? WHERE id_transaksi = ?")) {
-                    up.setString(1, alasan.trim());
-                    up.setString(2, LoginFrame.kasirAktif);
-                    up.setInt(3, idTransaksi);
-                    up.executeUpdate();
-                }
+                    try (PreparedStatement up = conn.prepareStatement(
+                            "UPDATE transaksi SET total_harga = 0, status_transaksi = 'VOID', catatan_status = ?, updated_by = ? WHERE id_transaksi = ?")) {
+                        up.setString(1, alasan.trim());
+                        up.setString(2, LoginFrame.getKasirAktif());
+                        up.setInt(3, idTransaksi);
+                        up.executeUpdate();
+                    }
 
                 int idRetur;
-                try (PreparedStatement ps = conn.prepareStatement(
-                        "INSERT INTO retur_transaksi (id_transaksi, kasir, jenis, alasan, total_retur) VALUES (?, ?, 'VOID', ?, ?)",
-                        Statement.RETURN_GENERATED_KEYS)) {
-                    ps.setInt(1, idTransaksi);
-                    ps.setString(2, LoginFrame.kasirAktif);
-                    ps.setString(3, alasan.trim());
-                    ps.setInt(4, totalVoid);
-                    ps.executeUpdate();
-                    try (ResultSet gk = ps.getGeneratedKeys()) {
-                        gk.next();
-                        idRetur = gk.getInt(1);
+                    try (PreparedStatement ps = conn.prepareStatement(
+                            "INSERT INTO retur_transaksi (id_transaksi, kasir, jenis, alasan, total_retur) VALUES (?, ?, 'VOID', ?, ?)",
+                            Statement.RETURN_GENERATED_KEYS)) {
+                        ps.setInt(1, idTransaksi);
+                        ps.setString(2, LoginFrame.getKasirAktif());
+                        ps.setString(3, alasan.trim());
+                        ps.setInt(4, totalVoid);
+                        ps.executeUpdate();
+                        try (ResultSet gk = ps.getGeneratedKeys()) {
+                            gk.next();
+                            idRetur = gk.getInt(1);
+                        }
                     }
-                }
 
                 try (PreparedStatement psD = conn.prepareStatement(
                         "INSERT INTO detail_retur (id_retur, nama_barang, qty, harga, subtotal) " +
@@ -369,7 +374,7 @@ public class TransactionHistoryFrame extends JFrame {
                     upTr.setInt(1, totalSisa);
                     upTr.setString(2, newStatus);
                     upTr.setString(3, alasan.trim());
-                    upTr.setString(4, LoginFrame.kasirAktif);
+                    upTr.setString(4, LoginFrame.getKasirAktif());
                     upTr.setInt(5, idTransaksi);
                     upTr.executeUpdate();
                 }
@@ -379,7 +384,7 @@ public class TransactionHistoryFrame extends JFrame {
                         "INSERT INTO retur_transaksi (id_transaksi, kasir, jenis, alasan, total_retur) VALUES (?, ?, 'RETUR', ?, ?)",
                         Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, idTransaksi);
-                    ps.setString(2, LoginFrame.kasirAktif);
+                    ps.setString(2, LoginFrame.getKasirAktif());
                     ps.setString(3, alasan.trim());
                     ps.setInt(4, subtotalRetur);
                     ps.executeUpdate();

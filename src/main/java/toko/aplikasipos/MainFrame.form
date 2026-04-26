@@ -107,10 +107,10 @@
                 <Property name="bottomLeftRound" type="boolean" value="false"/>
                 <Property name="bottomRightRound" type="boolean" value="false"/>
                 <Property name="colorEnd" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="75" green="3c" red="27" type="rgb"/>
+                  <Color blue="7a" green="40" red="40" type="rgb"/>
                 </Property>
                 <Property name="colorStart" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="75" green="3c" red="27" type="rgb"/>
+                  <Color blue="64" green="14" red="1b" type="rgb"/>
                 </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[557, 500]"/>
@@ -126,18 +126,14 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" alignment="0" attributes="0">
+                      <Group type="102" alignment="1" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="103" groupAlignment="1" attributes="0">
                               <Component id="CariBarang" max="32767" attributes="0"/>
-                              <Group type="102" attributes="0">
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="panelSEH" pref="643" max="32767" attributes="0"/>
-                                      <Component id="jScrollPane1" max="32767" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace max="-2" attributes="0"/>
-                              </Group>
+                              <Component id="panelSEH" alignment="0" pref="643" max="32767" attributes="0"/>
+                              <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
                           </Group>
+                          <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -361,6 +357,9 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="btnScanTambahStokA">
                       <Properties>
+                        <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                          <Color blue="4f" green="21" red="6d" type="rgb"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Scan Tambah Stok"/>
                       </Properties>
                       <Events>
@@ -402,10 +401,10 @@
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                   <Group type="102" attributes="0">
-                                      <Component id="filter" pref="217" max="32767" attributes="0"/>
+                                      <Component id="filter" max="32767" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="cbFilterKategori" max="32767" attributes="0"/>
+                                  <Component id="cbFilterKategori" pref="223" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                       </Group>
@@ -492,10 +491,10 @@
                 <Property name="bottomLeftRound" type="boolean" value="false"/>
                 <Property name="bottomRightRound" type="boolean" value="false"/>
                 <Property name="colorEnd" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="75" green="3c" red="27" type="rgb"/>
+                  <Color blue="7a" green="40" red="40" type="rgb"/>
                 </Property>
                 <Property name="colorStart" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="75" green="3c" red="27" type="rgb"/>
+                  <Color blue="64" green="14" red="1b" type="rgb"/>
                 </Property>
                 <Property name="topLeftRound" type="boolean" value="false"/>
                 <Property name="topRightRound" type="boolean" value="false"/>
@@ -687,7 +686,7 @@
             <Property name="bottomLeftRound" type="boolean" value="false"/>
             <Property name="bottomRightRound" type="boolean" value="false"/>
             <Property name="colorEnd" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="75" green="3c" red="27" type="rgb"/>
+              <Color blue="64" green="14" red="1b" type="rgb"/>
             </Property>
             <Property name="colorStart" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="b0" green="7e" red="48" type="rgb"/>

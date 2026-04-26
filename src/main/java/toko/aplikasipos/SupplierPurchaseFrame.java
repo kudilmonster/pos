@@ -1,6 +1,7 @@
 package toko.aplikasipos;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,17 +21,17 @@ import javax.swing.table.DefaultTableModel;
 
 public class SupplierPurchaseFrame extends JFrame {
 
-
     private final JTextField txtNamaSupplier = new JTextField(12);
     private final JTextField txtKontak = new JTextField(10);
     private final JTextField txtAlamat = new JTextField(14);
+    private final JTextField txtKeterangan = new JTextField(20);
     private final JComboBox<String> cbSupplier = new JComboBox<>();
     private final JComboBox<String> cbBarang = new JComboBox<>();
     private final JTextField txtQty = new JTextField("1", 5);
     private final JTextField txtHargaBeli = new JTextField(8);
 
     private final DefaultTableModel modelSupplier = new DefaultTableModel(
-            new String[]{"ID", "Nama Supplier", "Kontak", "Alamat"}, 0
+            new String[]{"ID", "Nama Supplier", "Kontak", "Alamat", "Keterangan"}, 0
     ) {
         @Override
         public boolean isCellEditable(int row, int column) {
@@ -44,7 +45,7 @@ public class SupplierPurchaseFrame extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         
-        // 1. Pasang ikon aplikasi (Bebas cangkir kopi)
+        // 1. Pasang ikon aplikasi
         AppUtil.setWindowIcon(this);
         
         // 2. Jalankan Auto-Patch Database sebelum memuat UI
@@ -62,17 +63,17 @@ public class SupplierPurchaseFrame extends JFrame {
              Statement st = conn.createStatement()) {
             
             // A. Pastikan tabel supplier ada
-            st.execute("CREATE TABLE IF NOT EXISTS supplier (id_supplier INTEGER PRIMARY KEY AUTOINCREMENT, nama_supplier TEXT, kontak TEXT, alamat TEXT)");
+            st.execute("CREATE TABLE IF NOT EXISTS supplier (id_supplier INTEGER PRIMARY KEY AUTOINCREMENT, nama_supplier TEXT UNIQUE NOT NULL, kontak TEXT, alamat TEXT, keterangan TEXT)");
             
-            // B. Trik deteksi kolom 'kontak' yang hilang (solusi untuk pesan error Anda!)
+            // B. Trik deteksi kolom yang hilang
             try {
-                st.executeQuery("SELECT kontak FROM supplier LIMIT 1");
+                st.executeQuery("SELECT kontak, alamat, keterangan FROM supplier LIMIT 1");
             } catch (Exception e) {
-                // Jika masuk ke catch ini, berarti kolom 'kontak' belum ada di DB lama.
-                // Mari kita tambahkan secara otomatis melalui kode!
-                st.execute("ALTER TABLE supplier ADD COLUMN kontak TEXT");
-                st.execute("ALTER TABLE supplier ADD COLUMN alamat TEXT");
-                System.out.println("Database Berhasil Di-Patch: Kolom kontak dan alamat ditambahkan!");
+                // Jika masuk ke catch ini, berarti ada kolom yang belum ada di DB lama.
+                try { st.execute("ALTER TABLE supplier ADD COLUMN kontak TEXT"); } catch(Exception ignored){}
+                try { st.execute("ALTER TABLE supplier ADD COLUMN alamat TEXT"); } catch(Exception ignored){}
+                try { st.execute("ALTER TABLE supplier ADD COLUMN keterangan TEXT"); } catch(Exception ignored){}
+                System.out.println("Database Berhasil Di-Patch: Kolom kontak/alamat/keterangan disesuaikan!");
             }
             
             // C. Pastikan tabel pembelian dan detailnya juga siap
@@ -87,6 +88,7 @@ public class SupplierPurchaseFrame extends JFrame {
     private void initUi() {
         // Form Atas (Supplier)
         JPanel formSupplier = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        formSupplier.setBackground(new Color(39, 60, 117));
         formSupplier.setBorder(BorderFactory.createTitledBorder("Input Supplier Baru"));
         JButton btnTambahSupplier = new JButton("Tambah Supplier");
         formSupplier.add(new JLabel("Nama:"));
@@ -95,6 +97,8 @@ public class SupplierPurchaseFrame extends JFrame {
         formSupplier.add(txtKontak);
         formSupplier.add(new JLabel("Alamat:"));
         formSupplier.add(txtAlamat);
+        formSupplier.add(new JLabel("Keterangan:"));
+        formSupplier.add(txtKeterangan);
         formSupplier.add(btnTambahSupplier);
 
         // Tabel Tengah
@@ -104,6 +108,7 @@ public class SupplierPurchaseFrame extends JFrame {
 
         // Form Bawah (Pembelian)
         JPanel formPembelian = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        formPembelian.setBackground(new Color(39, 60, 117));
         formPembelian.setBorder(BorderFactory.createTitledBorder("Transaksi Pembelian Barang"));
         JButton btnSimpanBeli = new JButton("Simpan Pembelian");
         formPembelian.add(new JLabel("Pilih Supplier:"));
@@ -116,10 +121,9 @@ public class SupplierPurchaseFrame extends JFrame {
         formPembelian.add(txtHargaBeli);
         formPembelian.add(btnSimpanBeli);
 
-        // PERBAIKAN LAYOUT: Menggunakan BorderLayout agar proporsional
         setLayout(new BorderLayout(10, 10));
         add(formSupplier, BorderLayout.NORTH);
-        add(spSupplier, BorderLayout.CENTER); // Tabel akan mengisi ruang kosong di tengah
+        add(spSupplier, BorderLayout.CENTER);
         add(formPembelian, BorderLayout.SOUTH);
 
         // Action Listener
@@ -130,14 +134,17 @@ public class SupplierPurchaseFrame extends JFrame {
     private void loadSupplier() {
         modelSupplier.setRowCount(0);
         cbSupplier.removeAllItems();
-        String sql = "SELECT id_supplier, nama_supplier, COALESCE(kontak,''), COALESCE(alamat,'') FROM supplier ORDER BY nama_supplier";
+        String sql = "SELECT id_supplier, nama_supplier, COALESCE(kontak,''), COALESCE(alamat,''), COALESCE(keterangan,'') FROM supplier ORDER BY nama_supplier";
         try (Connection conn = DatabaseManager.getConnection();
              Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
                 int id = rs.getInt("id_supplier");
                 String nama = rs.getString("nama_supplier");
-                modelSupplier.addRow(new Object[]{id, nama, rs.getString(3), rs.getString(4)});
+                
+                // PERBAIKAN: rs.getString(5) ditambahkan ke dalam array agar tampil di tabel
+                modelSupplier.addRow(new Object[]{id, nama, rs.getString(3), rs.getString(4), rs.getString(5)});
+                
                 cbSupplier.addItem(id + " - " + nama);
             }
         } catch (Exception e) {
@@ -159,41 +166,41 @@ public class SupplierPurchaseFrame extends JFrame {
         }
     }
 
-private void simpanSupplier() {
+    private void simpanSupplier() {
         String nama = txtNamaSupplier.getText().trim();
         if (nama.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Nama supplier wajib diisi.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
         
-        String sql = "INSERT INTO supplier (nama_supplier, kontak, alamat) VALUES (?, ?, ?)";
+        // PERBAIKAN: Query SQL sekarang mencakup kolom keterangan
+        String sql = "INSERT INTO supplier (nama_supplier, kontak, alamat, keterangan) VALUES (?, ?, ?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
              
             ps.setString(1, nama);
             ps.setString(2, txtKontak.getText().trim());
             ps.setString(3, txtAlamat.getText().trim());
+            ps.setString(4, txtKeterangan.getText().trim()); // Menyimpan input keterangan ke database
             ps.executeUpdate();
             
             txtNamaSupplier.setText("");
             txtKontak.setText("");
             txtAlamat.setText("");
+            txtKeterangan.setText(""); // Membersihkan form keterangan setelah simpan
             loadSupplier();
             JOptionPane.showMessageDialog(this, "Data Supplier berhasil tersimpan!");
             
         } catch (Exception e) {
-            // --- LOGIKA BARU: MENERJEMAHKAN ERROR DATABASE ---
             if (e.getMessage().contains("UNIQUE constraint failed")) {
                 JOptionPane.showMessageDialog(this, 
-                    "Supplier dengan nama '" + nama + "' sudah terdaftar!\nSilakan gunakan nama lain (misalnya: " + nama + " Cabang 2).", 
+                    "Supplier dengan nama '" + nama + "' sudah terdaftar!\nSilakan gunakan nama lain.", 
                     "Data Kembar (Ganda)", 
                     JOptionPane.WARNING_MESSAGE);
                     
-                // Kembalikan kursor ke kotak nama agar user bisa langsung mengetik ulang
                 txtNamaSupplier.selectAll();
                 txtNamaSupplier.requestFocus();
             } else {
-                // Tampilkan error lain jika ada masalah di luar data ganda
                 JOptionPane.showMessageDialog(this, "Gagal simpan supplier:\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -226,8 +233,7 @@ private void simpanSupplier() {
             int idSupplier = Integer.parseInt(supplierItem.split(" - ")[0]);
             String namaBarang = cbBarang.getSelectedItem().toString();
 
-            // Mencegah error jika dijalankan tanpa login
-            String kasir = (LoginFrame.kasirAktif != null && !LoginFrame.kasirAktif.isEmpty()) ? LoginFrame.kasirAktif : "Admin";
+            String kasir = (LoginFrame.getKasirAktif() != null && !LoginFrame.getKasirAktif().isEmpty()) ? LoginFrame.getKasirAktif() : "Admin";
 
             conn.setAutoCommit(false);
             try {
@@ -255,7 +261,6 @@ private void simpanSupplier() {
                     ps.executeUpdate();
                 }
 
-                // Update stok dan Harga Beli terbaru di tabel barang
                 try (PreparedStatement ps = conn.prepareStatement(
                         "UPDATE barang SET stok = stok + ?, harga_modal = ? WHERE nama_barang = ?")) {
                     ps.setInt(1, qty);
@@ -267,7 +272,6 @@ private void simpanSupplier() {
                 conn.commit();
                 JOptionPane.showMessageDialog(this, "Transaksi Pembelian berhasil disimpan!\nStok barang bertambah otomatis.");
                 
-                // Reset form
                 txtQty.setText("1");
                 txtHargaBeli.setText("");
                 cbSupplier.setSelectedIndex(0);

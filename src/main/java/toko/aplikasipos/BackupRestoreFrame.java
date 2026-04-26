@@ -1,6 +1,7 @@
 package toko.aplikasipos;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.io.File;
 import java.nio.file.Files;
@@ -14,10 +15,18 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 
 public class BackupRestoreFrame extends JFrame {
 
-    private static final Path DB_PATH = Path.of("pos_db.db");
+    // 1. UBAH JALUR DATABASE KE FOLDER USER (Sama seperti DatabaseManager)
+    private static final Path DB_PATH;
+    static {
+        String userHome = System.getProperty("user.home");
+        File dbFile = new File(userHome, ".sanFK-POS/pos_db.db");
+        DB_PATH = dbFile.toPath();
+    }
+    
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
 
     public BackupRestoreFrame() {
@@ -30,13 +39,21 @@ public class BackupRestoreFrame extends JFrame {
 
     private void initUi() {
         JPanel content = new JPanel(new BorderLayout(8, 8));
+        content.setBackground(new Color(39, 60, 117));
+        content.setBorder(new EmptyBorder(15, 15, 15, 15)); // Tambah jarak margin agar lebih rapi
+
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        actions.setOpaque(false); // Membuat background panel tombol menjadi transparan mengikuti warna biru
+
         JButton btnBackup = new JButton("Backup Sekarang");
         JButton btnRestore = new JButton("Restore dari File");
         actions.add(btnBackup);
         actions.add(btnRestore);
 
-        content.add(new JLabel("Gunakan fitur ini untuk backup/restore file SQLite (pos_db.db)."), BorderLayout.NORTH);
+        JLabel lblInfo = new JLabel("Gunakan fitur ini untuk backup/restore file SQLite (pos_db.db).");
+        lblInfo.setForeground(Color.WHITE); // 2. UBAH WARNA TEKS JADI PUTIH
+
+        content.add(lblInfo, BorderLayout.NORTH);
         content.add(actions, BorderLayout.CENTER);
         setContentPane(content);
 
@@ -85,4 +102,3 @@ public class BackupRestoreFrame extends JFrame {
         }
     }
 }
-

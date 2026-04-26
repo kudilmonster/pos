@@ -60,9 +60,9 @@ public class SetupTokoFrame extends javax.swing.JFrame {
         txtAdmin.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
 
         txtPassword.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
-        txtPassword.setText("jPasswordField1");
         txtPassword.addActionListener(this::txtPasswordActionPerformed);
 
+        btnSimpanSetup.setBackground(new java.awt.Color(44, 44, 84));
         btnSimpanSetup.setFont(new java.awt.Font("Segoe UI Semibold", 0, 12)); // NOI18N
         btnSimpanSetup.setText("Simpan");
         btnSimpanSetup.addActionListener(this::btnSimpanSetupActionPerformed);
@@ -89,7 +89,7 @@ public class SetupTokoFrame extends javax.swing.JFrame {
         jLabel6.setText("sanFK POS");
         jLabel6.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
 
-        AppUtil.setLabelIcon(jLabel7, "/icon/logofk32.png");
+        jLabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/logofk32.png"))); // NOI18N
 
         javax.swing.GroupLayout customRoundedPanel1Layout = new javax.swing.GroupLayout(customRoundedPanel1);
         customRoundedPanel1.setLayout(customRoundedPanel1Layout);
@@ -103,19 +103,18 @@ public class SetupTokoFrame extends javax.swing.JFrame {
                     .addComponent(jLabel4)
                     .addComponent(jLabel5))
                 .addGap(32, 32, 32)
-                .addGroup(customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btnSimpanSetup)
-                    .addGroup(customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(jLabel6)
-                        .addGroup(customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(customRoundedPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel7))
-                            .addComponent(jScrollPane1)
-                            .addComponent(txtNamaToko)
-                            .addComponent(txtAdmin)
-                            .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 234, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addGroup(customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel6)
+                    .addGroup(customRoundedPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(customRoundedPanel1Layout.createSequentialGroup()
+                            .addComponent(jLabel1)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel7))
+                        .addComponent(jScrollPane1)
+                        .addComponent(txtNamaToko)
+                        .addComponent(txtAdmin)
+                        .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 234, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btnSimpanSetup, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(148, Short.MAX_VALUE))
         );
         customRoundedPanel1Layout.setVerticalGroup(
@@ -144,8 +143,8 @@ public class SetupTokoFrame extends javax.swing.JFrame {
                     .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel5))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(btnSimpanSetup)
-                .addGap(81, 81, 81))
+                .addComponent(btnSimpanSetup, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(67, 67, 67))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());

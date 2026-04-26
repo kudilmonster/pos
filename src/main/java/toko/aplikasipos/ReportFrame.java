@@ -75,6 +75,7 @@ public class ReportFrame extends JFrame {
 
     private void initUi() {
         JPanel panelFilter = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelFilter.setBackground(new Color(39, 60, 117));
         JButton btnMuat = new JButton("Muat Laporan");
         JButton btnPreview = new JButton("Preview");
         JButton btnExportCsv = new JButton("Export CSV");
@@ -92,6 +93,7 @@ public class ReportFrame extends JFrame {
         panelFilter.add(cbChartMode);
 
         JPanel panelSummary = new JPanel(new GridLayout(2, 4, 8, 8));
+        panelSummary.setBackground(new Color(39, 60, 117));
         panelSummary.add(new JLabel("Total Transaksi"));
         panelSummary.add(lblTotalTransaksi);
         panelSummary.add(new JLabel("Omzet"));
@@ -102,6 +104,7 @@ public class ReportFrame extends JFrame {
         panelSummary.add(lblRataRata);
 
         JPanel panelMain = new JPanel(new BorderLayout(8, 8));
+        panelMain.setBackground(new Color(39, 60, 117));
         panelMain.add(panelSummary, BorderLayout.NORTH);
         panelMain.add(new JScrollPane(tblTopItem), BorderLayout.CENTER);
         chartPanel.setPreferredSize(new Dimension(760, 200));

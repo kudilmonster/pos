@@ -16,7 +16,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 public class MainFrame extends javax.swing.JFrame {
-private DefaultTableModel modelKeranjang;
+    // FIX BUG #2: Hapus modelKeranjang dan prosesScanBarang — dead code yang tidak terhubung ke UI
+    // (MainFrame adalah halaman input stok, bukan kasir)
+
     private Connection getConnection() throws Exception {
         return DatabaseManager.getConnection();
     }
@@ -59,11 +61,10 @@ private DefaultTableModel modelKeranjang;
         initIcons();
         requestBarcodeFocus();
 
-
     }
 
     private void applyRolePermissions() {
-        boolean isAdmin = "Admin".equalsIgnoreCase(LoginFrame.roleAktif);
+        boolean isAdmin = "Admin".equalsIgnoreCase(LoginFrame.getRoleAktif());
         if (isAdmin) {
             return;
         }
@@ -261,126 +262,101 @@ private DefaultTableModel modelKeranjang;
         AppUtil.setButtonIcon(btnSimpanUser, "/icon/person_add.png");
         AppUtil.setButtonIcon(lblMenuKasir, "/icon/monitoring.png");
         AppUtil.setButtonIcon(btnHapusUser, "/icon/person_cancel.png");
+        AppUtil.setButtonIcon(btnScanTambahStokA, "/icon/barcode.png");
     }
 
     private void requestBarcodeFocus() {
         SwingUtilities.invokeLater(() -> txtBarcodeBarang.requestFocusInWindow());
     }
 
-private boolean tambahStokDariBarcode(String barcode, int qtyTambah) {
-    try (Connection conn = DatabaseManager.getConnection()) {
+    private boolean tambahStokDariBarcode(String barcode, int qtyTambah) {
+        try (Connection conn = DatabaseManager.getConnection()) {
 
-        // 1. Cek dulu apakah barcode sudah ada
-        String cek = "SELECT nama_barang FROM barang WHERE barcode = ?";
-        PreparedStatement pstCek = conn.prepareStatement(cek);
-        pstCek.setString(1, barcode);
-        ResultSet rs = pstCek.executeQuery();
+            // 1. Cek dulu apakah barcode sudah ada
+            String cek = "SELECT nama_barang FROM barang WHERE barcode = ?";
+            try (PreparedStatement pstCek = conn.prepareStatement(cek)) {
+                pstCek.setString(1, barcode);
 
-        if (rs.next()) {
-            // ✅ BARANG SUDAH ADA → TAMBAH STOK
-            String update = "UPDATE barang SET stok = stok + ? WHERE barcode = ?";
-            PreparedStatement pstUpdate = conn.prepareStatement(update);
-            pstUpdate.setInt(1, qtyTambah);
-            pstUpdate.setString(2, barcode);
-            pstUpdate.executeUpdate();
+                try (ResultSet rs = pstCek.executeQuery()) {
+                    if (rs.next()) {
+                        // FIX BUG #5: Gunakan try-with-resources agar PreparedStatement ditutup otomatis
+                        // BARANG SUDAH ADA → TAMBAH STOK
+                        String update = "UPDATE barang SET stok = stok + ? WHERE barcode = ?";
+                        try (PreparedStatement pstUpdate = conn.prepareStatement(update)) {
+                            pstUpdate.setInt(1, qtyTambah);
+                            pstUpdate.setString(2, barcode);
+                            pstUpdate.executeUpdate();
+                        }
 
-            JOptionPane.showMessageDialog(this, "Stok berhasil ditambahkan!");
-            return true;
+                        JOptionPane.showMessageDialog(this, "Stok berhasil ditambahkan!");
+                        return true;
 
-        } else {
-            // ❗ BARANG BELUM ADA → INPUT BARU
-            String nama = JOptionPane.showInputDialog(this, "Nama barang:");
-            if (nama == null || nama.isEmpty()) return false;
+                    } else {
+                        // BARANG BELUM ADA → INPUT BARU
+                        String nama = JOptionPane.showInputDialog(this, "Nama barang:");
+                        if (nama == null || nama.isEmpty()) {
+                            return false;
+                        }
 
-            String hargaStr = JOptionPane.showInputDialog(this, "Harga:");
-            int harga = Integer.parseInt(hargaStr);
+                        String hargaStr = JOptionPane.showInputDialog(this, "Harga:");
+                        int harga = Integer.parseInt(hargaStr);
 
-            Object kategoriObj = cbKategori.getSelectedItem();
-            if (kategoriObj == null) {
-                JOptionPane.showMessageDialog(this, "Pilih kategori dulu!");
-                return false;
+                        Object kategoriObj = cbKategori.getSelectedItem();
+                        if (kategoriObj == null) {
+                            JOptionPane.showMessageDialog(this, "Pilih kategori dulu!");
+                            return false;
+                        }
+
+                        String kategori = kategoriObj.toString();
+
+                        String insert = "INSERT INTO barang (nama_barang, kategori, harga, stok, barcode) VALUES (?, ?, ?, ?, ?)";
+                        try (PreparedStatement pstInsert = conn.prepareStatement(insert)) {
+                            pstInsert.setString(1, nama);
+                            pstInsert.setString(2, kategori);
+                            pstInsert.setInt(3, harga);
+                            pstInsert.setInt(4, qtyTambah);
+                            pstInsert.setString(5, barcode);
+                            pstInsert.executeUpdate();
+                        }
+
+                        JOptionPane.showMessageDialog(this, "Barang baru berhasil ditambahkan!");
+                        return true;
+                    }
+                }
             }
 
-            String kategori = kategoriObj.toString();
-
-            String insert = "INSERT INTO barang (nama_barang, kategori, harga, stok, barcode) VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement pstInsert = conn.prepareStatement(insert);
-            pstInsert.setString(1, nama);
-            pstInsert.setString(2, kategori);
-            pstInsert.setInt(3, harga);
-            pstInsert.setInt(4, qtyTambah);
-            pstInsert.setString(5, barcode);
-            pstInsert.executeUpdate();
-
-            JOptionPane.showMessageDialog(this, "Barang baru berhasil ditambahkan!");
-            return true;
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+            return false;
         }
-
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-        return false;
     }
-}
-    
+
     private void cariBarangDariScan(String barcode) {
-    String sql = "SELECT * FROM barang WHERE barcode = ?";
+        String sql = "SELECT * FROM barang WHERE barcode = ?";
 
-    try (Connection conn = DatabaseManager.getConnection();
-         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseManager.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        pstmt.setString(1, barcode);
-        ResultSet rs = pstmt.executeQuery();
+            pstmt.setString(1, barcode);
 
-        if (rs.next()) {
-            // ✅ Barang ditemukan → langsung proses
-            prosesScanBarang(rs);
-        } else {
-            JOptionPane.showMessageDialog(this, "Barcode tidak ditemukan!");
-        }
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    // Barang ditemukan → isi form otomatis
+                    txtNama.setText(rs.getString("nama_barang"));
+                    txtHarga.setText(String.valueOf(rs.getInt("harga")));
+                    txtStok.setText(String.valueOf(rs.getInt("stok")));
+                    txtBarcodeBarang.setText(barcode);
+                    cbKategori.setSelectedItem(rs.getString("kategori"));
+                    idBarangTerpilih = String.valueOf(rs.getInt("id_barang"));
+                } else {
+                    JOptionPane.showMessageDialog(this, "Barcode tidak ditemukan!");
+                }
+            }
 
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Error scan: " + e.getMessage());
-    }
-}
-    
-private void prosesScanBarang(ResultSet rs) throws Exception {
-    String nama = rs.getString("nama_barang");
-    int harga = rs.getInt("harga");
-    int stok = rs.getInt("stok");
-
-    if (stok <= 0) {
-        JOptionPane.showMessageDialog(this, "Stok habis!");
-        return;
-    }
-
-    // Pastikan modelKeranjang sudah ada
-    if (modelKeranjang == null) {
-        modelKeranjang = new DefaultTableModel(
-            new Object[]{"Nama", "Harga", "Qty", "Subtotal"}, 0
-        );
-    }
-
-    // Cek apakah barang sudah ada di keranjang
-    for (int i = 0; i < modelKeranjang.getRowCount(); i++) {
-        if (modelKeranjang.getValueAt(i, 0).equals(nama)) {
-
-            int qty = Integer.parseInt(modelKeranjang.getValueAt(i, 2).toString()) + 1;
-            int subtotal = qty * harga;
-
-            modelKeranjang.setValueAt(qty, i, 2);
-            modelKeranjang.setValueAt(subtotal, i, 3);
-
-            return;
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error scan: " + e.getMessage());
         }
     }
 
-    // Kalau belum ada → tambah baru
-    modelKeranjang.addRow(new Object[]{
-        nama, harga, 1, harga
-    });
-}
-    
-    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -448,8 +424,8 @@ private void prosesScanBarang(ResultSet rs) throws Exception {
         panelInputBarang.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Input Stok Barang", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI Black", 1, 18), new java.awt.Color(255, 255, 255))); // NOI18N
         panelInputBarang.setBottomLeftRound(false);
         panelInputBarang.setBottomRightRound(false);
-        panelInputBarang.setcolorEnd(new java.awt.Color(39, 60, 117));
-        panelInputBarang.setcolorStart(new java.awt.Color(39, 60, 117));
+        panelInputBarang.setcolorEnd(new java.awt.Color(64, 64, 122));
+        panelInputBarang.setcolorStart(new java.awt.Color(27, 20, 100));
         panelInputBarang.setMinimumSize(new java.awt.Dimension(557, 500));
         panelInputBarang.setName(""); // NOI18N
         panelInputBarang.setPreferredSize(new java.awt.Dimension(557, 500));
@@ -550,6 +526,7 @@ private void prosesScanBarang(ResultSet rs) throws Exception {
         panelSEH.add(btnSimpan);
         panelSEH.add(txtBarcodeBarang);
 
+        btnScanTambahStokA.setBackground(new java.awt.Color(109, 33, 79));
         btnScanTambahStokA.setText("Scan Tambah Stok");
         btnScanTambahStokA.addActionListener(this::btnScanTambahStokAActionPerformed);
         panelSEH.add(btnScanTambahStokA);
@@ -594,9 +571,9 @@ private void prosesScanBarang(ResultSet rs) throws Exception {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(CariBarangLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(CariBarangLayout.createSequentialGroup()
-                        .addComponent(filter, javax.swing.GroupLayout.DEFAULT_SIZE, 217, Short.MAX_VALUE)
+                        .addComponent(filter, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addContainerGap())
-                    .addComponent(cbFilterKategori, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(cbFilterKategori, 0, 223, Short.MAX_VALUE)))
         );
         CariBarangLayout.setVerticalGroup(
             CariBarangLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -615,15 +592,13 @@ private void prosesScanBarang(ResultSet rs) throws Exception {
         panelInputBarang.setLayout(panelInputBarangLayout);
         panelInputBarangLayout.setHorizontalGroup(
             panelInputBarangLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelInputBarangLayout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelInputBarangLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(panelInputBarangLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(panelInputBarangLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(CariBarang, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(panelInputBarangLayout.createSequentialGroup()
-                        .addGroup(panelInputBarangLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(panelSEH, javax.swing.GroupLayout.DEFAULT_SIZE, 643, Short.MAX_VALUE)
-                            .addComponent(jScrollPane1))
-                        .addContainerGap())))
+                    .addComponent(panelSEH, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 643, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING))
+                .addContainerGap())
         );
         panelInputBarangLayout.setVerticalGroup(
             panelInputBarangLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -640,8 +615,8 @@ private void prosesScanBarang(ResultSet rs) throws Exception {
         panelAkunUser.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Data Akun", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI Black", 1, 18), new java.awt.Color(255, 255, 255))); // NOI18N
         panelAkunUser.setBottomLeftRound(false);
         panelAkunUser.setBottomRightRound(false);
-        panelAkunUser.setcolorEnd(new java.awt.Color(39, 60, 117));
-        panelAkunUser.setcolorStart(new java.awt.Color(39, 60, 117));
+        panelAkunUser.setcolorEnd(new java.awt.Color(64, 64, 122));
+        panelAkunUser.setcolorStart(new java.awt.Color(27, 20, 100));
         panelAkunUser.setTopLeftRound(false);
         panelAkunUser.setTopRightRound(false);
 
@@ -761,7 +736,7 @@ private void prosesScanBarang(ResultSet rs) throws Exception {
 
         PanelLink.setBottomLeftRound(false);
         PanelLink.setBottomRightRound(false);
-        PanelLink.setcolorEnd(new java.awt.Color(39, 60, 117));
+        PanelLink.setcolorEnd(new java.awt.Color(27, 20, 100));
         PanelLink.setcolorStart(new java.awt.Color(72, 126, 176));
         PanelLink.setPreferredSize(new java.awt.Dimension(1007, 40));
         PanelLink.setTopLeftRound(false);
@@ -1149,7 +1124,7 @@ private void prosesScanBarang(ResultSet rs) throws Exception {
         String username = tblUser.getValueAt(barisTerpilih, 1).toString();
 
         // Keamanan: Cegah Admin menghapus akun yang sedang ia pakai sendiri!
-        if (username.equals(LoginFrame.kasirAktif)) {
+        if (username.equals(LoginFrame.getKasirAktif())) {
             JOptionPane.showMessageDialog(this, "Anda tidak bisa menghapus akun Anda sendiri yang sedang aktif digunakan!", "Akses Ditolak", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -1203,39 +1178,33 @@ private void prosesScanBarang(ResultSet rs) throws Exception {
     }//GEN-LAST:event_lblLinkSosmedMouseClicked
 
     private void btnScanTambahStokAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScanTambahStokAActionPerformed
-    KameraScanner scanner = new KameraScanner(this);
-    scanner.setVisible(true);
+        KameraScanner scanner = new KameraScanner(this, barcode -> {
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                txtBarcodeBarang.setText(barcode);
 
-    String barcode = scanner.getHasilScan();
+                String input = JOptionPane.showInputDialog(this, "Masukkan jumlah tambah stok:");
 
-    if (barcode == null || barcode.trim().isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Scan dibatalkan atau gagal!");
-        return;
-    }
+                if (input == null) {
+                    return;
+                }
 
-    // ✅ TAMBAHKAN INI
+                int qty;
+                try {
+                    qty = Integer.parseInt(input);
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(this, "Harus angka!");
+                    return;
+                }
 
-    txtBarcodeBarang.setText(barcode);
+                boolean sukses = tambahStokDariBarcode(barcode, qty);
 
-    String input = JOptionPane.showInputDialog(this, "Masukkan jumlah tambah stok:");
-
-    if (input == null) return;
-
-    int qty;
-    try {
-        qty = Integer.parseInt(input);
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Harus angka!");
-        return;
-    }
-
-    boolean sukses = tambahStokDariBarcode(barcode, qty);
-
-    if (sukses) {
-        cariData();
-        resetForm();
-        
-    }
+                if (sukses) {
+                    cariData();
+                    resetForm();
+                }
+            });
+        });
+        scanner.setVisible(true);
     }//GEN-LAST:event_btnScanTambahStokAActionPerformed
 
     private void openWorkspace(String tabName) {
@@ -1254,7 +1223,6 @@ private void prosesScanBarang(ResultSet rs) throws Exception {
         formWorkspaceAktif.toFront();
         formWorkspaceAktif.requestFocus();
     }
-
 
     public static void main(String args[]) {
 

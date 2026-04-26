@@ -10,43 +10,39 @@ import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class KameraScanner extends JDialog {
 
     private Webcam webcam;
     private WebcamPanel panel;
     private volatile boolean isScanning = true;
-    private String hasilScan = "";
+    private volatile boolean pauseScanning = false;
+    private final Consumer<String> onScanSuccess;
 
-    public KameraScanner(JFrame parent) {
-        super(parent, "Scan Barcode (Iriun)", true);
+    public KameraScanner(JFrame parent, Consumer<String> onScanSuccess) {
+        super(parent, "Continuous Scan Barcode", true);
+        this.onScanSuccess = onScanSuccess;
         initKamera();
+    }
+
+    public void setPauseScanning(boolean pause) {
+        this.pauseScanning = pause;
     }
 
     // ================= INIT =================
     private void initKamera() {
         try {
-
-            // 🔍 DEBUG LIST KAMERA
-            for (Webcam w : Webcam.getWebcams()) {
-                System.out.println("Kamera terdeteksi: " + w.getName());
-            }
-
-            // 🔥 PILIH IRIUN CAMERA
             for (Webcam w : Webcam.getWebcams()) {
                 String name = w.getName().toLowerCase();
-
                 if (name.contains("iriun")) {
                     webcam = w;
-                    System.out.println("Menggunakan kamera Iriun: " + w.getName());
                     break;
                 }
             }
 
-            // fallback kalau tidak ketemu
             if (webcam == null) {
                 webcam = Webcam.getDefault();
-                System.out.println("Fallback ke kamera default");
             }
 
             if (webcam == null) {
@@ -55,7 +51,6 @@ public class KameraScanner extends JDialog {
                 return;
             }
 
-            // 🔥 SET RESOLUSI HD (PENTING BANGET)
             webcam.setViewSize(new java.awt.Dimension(320, 240));
             webcam.open();
 
@@ -77,7 +72,6 @@ public class KameraScanner extends JDialog {
 
     // ================= SCANNER =================
     private void startScannerThread() {
-
         Map<DecodeHintType, Object> hints = new EnumMap<>(DecodeHintType.class);
         hints.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
         hints.put(DecodeHintType.POSSIBLE_FORMATS, java.util.Arrays.asList(
@@ -87,13 +81,14 @@ public class KameraScanner extends JDialog {
         ));
 
         Thread thread = new Thread(() -> {
-
             MultiFormatReader reader = new MultiFormatReader();
             reader.setHints(hints);
 
             while (isScanning) {
                 try {
-                    Thread.sleep(150); // lebih cepat scan
+                    Thread.sleep(150);
+
+                    if (pauseScanning) continue;
 
                     if (webcam == null || !webcam.isOpen()) continue;
 
@@ -113,8 +108,16 @@ public class KameraScanner extends JDialog {
                         Result result = reader.decode(bitmap);
 
                         if (result != null) {
-                            hasilScan = result.getText();
-                            stopScanner();
+                            String text = result.getText();
+                            java.awt.Toolkit.getDefaultToolkit().beep();
+                            
+                            // Kirim hasil scan ke KasirFrame secara otomatis
+                             if (onScanSuccess != null) {
+                                 onScanSuccess.accept(text);
+                             }
+                             
+                             // Jeda agar tidak scan berulang kali untuk barang yang sama
+                             Thread.sleep(2000); 
                         }
 
                     } catch (NotFoundException e) {
@@ -125,79 +128,44 @@ public class KameraScanner extends JDialog {
                     e.printStackTrace();
                 }
             }
-
         });
 
         thread.setDaemon(true);
         thread.start();
     }
 
-    // ================= ENHANCE IMAGE =================
     private BufferedImage enhance(BufferedImage image) {
-
         for (int y = 0; y < image.getHeight(); y++) {
             for (int x = 0; x < image.getWidth(); x++) {
-
                 int rgb = image.getRGB(x, y);
-
                 int r = (rgb >> 16) & 0xff;
                 int g = (rgb >> 8) & 0xff;
                 int b = rgb & 0xff;
-
                 int gray = (r + g + b) / 3;
-
-                // tingkatkan kontras
                 gray = gray > 120 ? 255 : 0;
-
                 int newPixel = (gray << 16) | (gray << 8) | gray;
                 image.setRGB(x, y, newPixel);
             }
         }
-
         return image;
     }
 
-    // ================= CROP =================
     private BufferedImage cropCenter(BufferedImage image) {
-
         int width = image.getWidth();
         int height = image.getHeight();
-
         int cropWidth = (int) (width * 0.7);
         int cropHeight = (int) (height * 0.5);
-
         int x = (width - cropWidth) / 2;
         int y = (height - cropHeight) / 2;
-
         return image.getSubimage(x, y, cropWidth, cropHeight);
-    }
-
-    // ================= STOP =================
-    private void stopScanner() {
-        isScanning = false;
-
-        java.awt.Toolkit.getDefaultToolkit().beep();
-
-        if (webcam != null && webcam.isOpen()) {
-            webcam.close();
-        }
-
-        dispose();
-    }
-
-    // ================= RESULT =================
-    public String getHasilScan() {
-        return hasilScan;
     }
 
     @Override
     public void dispose() {
         isScanning = false;
-
         if (webcam != null && webcam.isOpen()) {
             webcam.close();
         }
-
         super.dispose();
     }
 }

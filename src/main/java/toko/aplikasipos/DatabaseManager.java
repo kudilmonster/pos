@@ -1,5 +1,6 @@
 package toko.aplikasipos;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -9,7 +10,22 @@ import java.sql.Statement;
 
 public final class DatabaseManager {
 
-    private static final String DB_URL = "jdbc:sqlite:pos_db.db";
+    private static final String DB_URL;
+
+    // Blok statik ini akan otomatis dijalankan sekali saat aplikasi pertama kali memuat class ini
+    static {
+        // 1. Ambil direktori user (Misal: C:\Users\NamaUser)
+        String userHome = System.getProperty("user.home");
+        
+        // 2. Buat folder khusus (hidden) untuk aplikasi di direktori user
+        File appDir = new File(userHome, ".sanFK-POS");
+        if (!appDir.exists()) {
+            appDir.mkdirs(); // Membuat folder jika belum ada
+        }
+        
+        // 3. Rangkai URL database yang baru
+        DB_URL = "jdbc:sqlite:" + appDir.getAbsolutePath() + "/pos_db.db";
+    }
 
     private DatabaseManager() {
     }
@@ -103,7 +119,8 @@ public final class DatabaseManager {
                 id_supplier INTEGER PRIMARY KEY AUTOINCREMENT,
                 nama_supplier TEXT UNIQUE NOT NULL,
                 kontak TEXT,
-                alamat TEXT
+                alamat TEXT,
+                keterangan TEXT      
             )
         """);
 

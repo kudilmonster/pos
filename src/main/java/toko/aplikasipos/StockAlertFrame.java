@@ -1,6 +1,7 @@
 package toko.aplikasipos;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -45,6 +46,7 @@ public class StockAlertFrame extends JFrame {
 
     private void initUi() {
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        top.setBackground(new Color(39, 60, 117));
         JButton btnRefresh = new JButton("Refresh Data");
         JButton btnUpdateMin = new JButton("Atur Stok Minimum");
         top.add(new JLabel("Batas Stok Minimum:"));

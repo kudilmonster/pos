@@ -57,22 +57,20 @@
                       <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" pref="32" max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="btnSimpanSetup" min="-2" max="-2" attributes="0"/>
-                      <Group type="103" alignment="0" groupAlignment="1" attributes="0">
-                          <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                              <Group type="102" attributes="0">
-                                  <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
-                                  <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <Component id="jScrollPane1" max="32767" attributes="0"/>
-                              <Component id="txtNamaToko" max="32767" attributes="0"/>
-                              <Component id="txtAdmin" max="32767" attributes="0"/>
-                              <Component id="txtPassword" min="-2" pref="234" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="1" attributes="0">
+                      <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
                           </Group>
+                          <Component id="jScrollPane1" max="32767" attributes="0"/>
+                          <Component id="txtNamaToko" max="32767" attributes="0"/>
+                          <Component id="txtAdmin" max="32767" attributes="0"/>
+                          <Component id="txtPassword" min="-2" pref="234" max="-2" attributes="0"/>
                       </Group>
+                      <Component id="btnSimpanSetup" alignment="0" min="-2" pref="97" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace pref="148" max="32767" attributes="0"/>
               </Group>
@@ -109,8 +107,8 @@
                       <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                  <Component id="btnSimpanSetup" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace min="-2" pref="81" max="-2" attributes="0"/>
+                  <Component id="btnSimpanSetup" min="-2" pref="37" max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="67" max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -164,7 +162,6 @@
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
               <Font name="Segoe UI Semibold" size="14" style="0"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="jPasswordField1"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="txtPasswordActionPerformed"/>
@@ -172,6 +169,9 @@
         </Component>
         <Component class="javax.swing.JButton" name="btnSimpanSetup">
           <Properties>
+            <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+              <Color blue="54" green="2c" red="2c" type="rgb"/>
+            </Property>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
               <Font name="Segoe UI Semibold" size="12" style="0"/>
             </Property>

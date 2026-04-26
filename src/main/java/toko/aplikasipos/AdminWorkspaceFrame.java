@@ -31,6 +31,7 @@ public class AdminWorkspaceFrame extends javax.swing.JFrame {
         tabs.addTab("Laporan", wrapFrame(new ReportFrame()));
         tabs.addTab("Riwayat/Void", wrapFrame(new TransactionHistoryFrame()));
         tabs.addTab("Pembelian", wrapFrame(new SupplierPurchaseFrame()));
+        tabs.addTab("Reorder Stok", wrapFrame(new InventoryReorderFrame()));
         tabs.addTab("Stok Minimum", wrapFrame(new StockAlertFrame()));
         tabs.addTab("Backup/Restore", wrapFrame(new BackupRestoreFrame()));
     }

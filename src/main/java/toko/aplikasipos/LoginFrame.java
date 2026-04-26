@@ -12,8 +12,16 @@ public class LoginFrame extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(LoginFrame.class.getName());
 
     // Variabel statis ini bisa dipanggil dari MainFrame atau KasirFrame nanti
-    public static String kasirAktif = "";
-    public static String roleAktif = "";
+    private static String kasirAktif = "";
+    private static String roleAktif = "";
+
+    public static String getKasirAktif() {
+        return (kasirAktif == null) ? "Kasir" : kasirAktif;
+    }
+
+    public static String getRoleAktif() {
+        return (roleAktif == null) ? "Kasir" : roleAktif;
+    }
 
     // VARIABEL BARU: Jatah percobaan login
     private int sisaKesempatan = 3;
@@ -63,6 +71,7 @@ public class LoginFrame extends javax.swing.JFrame {
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
         jLabel3.setText("Sign In");
 
+        btnLogin.setBackground(new java.awt.Color(44, 44, 84));
         btnLogin.setText("Login");
         btnLogin.addActionListener(this::btnLoginActionPerformed);
 
@@ -73,7 +82,7 @@ public class LoginFrame extends javax.swing.JFrame {
         jLabel4.setForeground(new java.awt.Color(204, 204, 204));
         jLabel4.setText("sanFK POS");
 
-        AppUtil.setLabelIcon(jLabel5, "/icon/logofk32.png");
+        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/logofk32.png"))); // NOI18N
 
         javax.swing.GroupLayout customRoundedPanel1Layout = new javax.swing.GroupLayout(customRoundedPanel1);
         customRoundedPanel1.setLayout(customRoundedPanel1Layout);
@@ -243,7 +252,8 @@ public class LoginFrame extends javax.swing.JFrame {
             javax.swing.UIManager.put("Button.arc", 15);
             javax.swing.UIManager.put("Component.arc", 15);
             javax.swing.UIManager.put("TextComponent.arc", 15);
-
+javax.swing.UIManager.put("Label.foreground", Color.WHITE);
+javax.swing.UIManager.put("TitledBorder.titleColor", Color.WHITE);
             // 3. Tweak ScrollBar agar lebih tipis dan modern
             javax.swing.UIManager.put("ScrollBar.thumbArc", 999);
             javax.swing.UIManager.put("ScrollBar.width", 10);
@@ -285,6 +295,14 @@ public class LoginFrame extends javax.swing.JFrame {
                 } catch (Exception e) {
                     // Jika terjadi error, tampilkan di output (bawah) agar kita tahu apa masalahnya
                     System.out.println("Error Gatekeeper: " + e.getMessage());
+                }
+
+                // SARAN #7: Inisialisasi database (buat tabel jika belum ada) sebelum login
+                // agar aplikasi tidak error jika SetupTokoFrame dilewati karena ada bug sebelumnya
+                try {
+                    toko.aplikasipos.DatabaseManager.initializeDatabase();
+                } catch (Exception e) {
+                    System.out.println("Peringatan inisialisasi DB: " + e.getMessage());
                 }
 
                 // LOGIKA ROUTING:
